@@ -21,11 +21,9 @@
   <style>
     html{scroll-behavior:smooth}
 
-    /* ---- Minimal nav: centered wordmark only, not a link ---- */
-    .ademo-nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:center;align-items:center;
-      padding:22px 0;background:linear-gradient(to bottom,rgba(1,0,4,.9),rgba(1,0,4,0));
-      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-    .ademo-nav__logo{height:26px;width:auto;opacity:.96;pointer-events:none;user-select:none}
+    /* ---- Nav: real site bar (.nav from styles.css), logo-only + centered; scroll behaviour in demo.js ---- */
+    .nav__inner--solo{justify-content:center}
+    .nav__brand--static{cursor:default;pointer-events:none}
 
     /* ---- Demo stage ---- */
     .demo{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:130px 0 90px}
@@ -47,7 +45,7 @@
       padding:clamp(24px,3.5vw,40px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
 
     /* ---- Siri wave canvas (black pixels drop out via screen blend) ---- */
-    .siriwave{width:min(330px,74vw);height:min(210px,48vw);display:block;margin:0 auto;mix-blend-mode:screen;opacity:.98}
+    .siriwave{width:min(340px,76vw);height:min(220px,50vw);display:block;margin:0 auto}
 
     .callstatus{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-height:18px}
     .callstatus.is-live{color:#fff}
@@ -74,9 +72,13 @@
 </head>
 <body>
 
-  <!-- Minimal nav: centered wordmark, intentionally NOT a link -->
-  <header class="ademo-nav">
-    <img class="ademo-nav__logo" src="assets/wordmark.png" alt="CoroAmbra" />
+  <!-- Nav: real site bar, logo-only, centered, intentionally NOT a link -->
+  <header class="nav" id="nav">
+    <div class="nav__inner nav__inner--solo">
+      <div class="nav__brand nav__brand--static" aria-label="CoroAmbra">
+        <img class="nav__wordmark" src="assets/wordmark.png" alt="CoroAmbra" />
+      </div>
+    </div>
   </header>
 
   <!-- ================= DEMO STAGE ================= -->
