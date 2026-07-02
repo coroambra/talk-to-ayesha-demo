@@ -6,7 +6,6 @@
   <title>Talk to Ayesha | CoroAmbra AI Voice Demo</title>
   <meta name="description" content="Talk live to Ayesha, an AI voice receptionist for a Lahore real estate office. Tap, allow your mic, and speak to her in Urdu." />
 
-  <!-- Geist + Geist Mono (exact site fonts) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet" />
@@ -20,18 +19,21 @@
   <link rel="stylesheet" href="css/styles.css" />
 
   <style>
-    /* This page ships without the site's reveal/lenis JS, so force everything visible + normal scroll */
-    [data-reveal],[data-reveal-instant]{opacity:1 !important;transform:none !important}
-    .nav{opacity:1 !important;transform:none !important}
     html{scroll-behavior:smooth}
 
+    /* ---- Minimal nav: centered wordmark only, not a link ---- */
+    .ademo-nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:center;align-items:center;
+      padding:22px 0;background:linear-gradient(to bottom,rgba(1,0,4,.9),rgba(1,0,4,0));
+      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+    .ademo-nav__logo{height:26px;width:auto;opacity:.96;pointer-events:none;user-select:none}
+
     /* ---- Demo stage ---- */
-    .demo{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:120px 0 90px}
-    .demo__bg{position:absolute;inset:0;z-index:0;opacity:.28}
+    .demo{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:130px 0 90px}
+    .demo__bg{position:absolute;inset:0;z-index:0;opacity:.26}
     .demo__bg img{width:100%;height:100%;object-fit:cover}
     .demo__bg::after{content:"";position:absolute;inset:0;background:radial-gradient(1200px 600px at 50% 12%,transparent,var(--bg) 72%)}
     .demo__wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(32px,5vw,80px);align-items:center}
-    @media(max-width:900px){.demo__wrap{grid-template-columns:1fr;gap:40px;text-align:center}}
+    @media(max-width:900px){.demo__wrap{grid-template-columns:1fr;gap:36px;text-align:center}}
 
     .demo__title{font-weight:600;font-size:clamp(40px,6vw,72px);line-height:1.02;letter-spacing:-.03em;margin:18px 0 16px}
     .demo__intro{color:var(--muted);font-size:clamp(15px,1.5vw,19px);max-width:52ch;margin-inline:0}
@@ -39,89 +41,49 @@
     .demo__hints{margin-top:22px;font-family:var(--mono);font-size:13px;color:var(--faint);line-height:1.9}
     .demo__hints b{color:var(--text);font-weight:500}
 
-    /* ---- Call card (Clear-Glass style) ---- */
-    .callcard{
-      background:rgba(3,3,7,.5);
-      border:1px solid rgba(255,255,255,.13);
-      border-radius:24px;
+    /* ---- Call card (Clear-Glass) ---- */
+    .callcard{background:rgba(3,3,7,.5);border:1px solid rgba(255,255,255,.13);border-radius:24px;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -30px rgba(0,0,0,.8);
-      padding:clamp(28px,4vw,44px);
-      display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px;
-    }
-    .orb{
-      --ring:rgba(255,255,255,.14);
-      width:132px;height:132px;border-radius:50%;position:relative;display:grid;place-items:center;
-      background:radial-gradient(circle at 50% 38%,#2a2a30,#0b0b0f 70%);
-      border:1px solid var(--ring);transition:transform .4s var(--ease),box-shadow .4s var(--ease);
-    }
-    .orb::before,.orb::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:1px solid rgba(255,255,255,.10)}
-    .orb__dot{width:16px;height:16px;border-radius:50%;background:var(--muted);transition:background .3s,transform .3s}
-    .orb.is-live{box-shadow:0 0 0 6px rgba(255,255,255,.04),0 0 60px -6px rgba(255,255,255,.25)}
-    .orb.is-live .orb__dot{background:#fff}
-    .orb.is-live::after{animation:ring 2s var(--ease) infinite}
-    .orb.is-speaking{transform:scale(1.05)}
-    .orb.is-speaking .orb__dot{animation:pulse .6s ease-in-out infinite}
-    @keyframes ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
-    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.7)}}
+      padding:clamp(24px,3.5vw,40px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
+
+    /* ---- Siri wave canvas (black pixels drop out via screen blend) ---- */
+    .siriwave{width:min(330px,74vw);height:min(210px,48vw);display:block;margin:0 auto;mix-blend-mode:screen;opacity:.98}
 
     .callstatus{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-height:18px}
     .callstatus.is-live{color:#fff}
 
-    .talkbtn{
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      background:#fff;color:#0a0a0c;font-weight:600;font-size:16px;
-      padding:16px 34px;border-radius:999px;transition:transform .25s var(--ease),opacity .25s,background .25s;
-      min-width:220px;
-    }
+    .talkbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#0a0a0c;font-weight:600;font-size:16px;
+      padding:16px 34px;border-radius:999px;transition:transform .25s var(--ease),opacity .25s,background .25s;min-width:220px}
     .talkbtn:hover{transform:translateY(-2px)}
     .talkbtn.is-live{background:#e8484f;color:#fff}
     .talkbtn:disabled{opacity:.6;cursor:default;transform:none}
     .talkbtn__mic{width:16px;height:16px;border-radius:5px 5px 7px 7px;background:currentColor;position:relative;flex:none}
     .talkbtn__mic::after{content:"";position:absolute;left:50%;bottom:-6px;width:8px;height:5px;border:2px solid currentColor;border-top:none;border-radius:0 0 6px 6px;transform:translateX(-50%)}
     .callnote{font-size:12.5px;color:var(--faint);max-width:34ch}
-    .callnote a{color:var(--muted);border-bottom:1px solid var(--border-strong)}
+
+    /* ---- Minimal footer ---- */
+    .ademo-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:34px 0 30px}
+    .ademo-footer__inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+    .ademo-footer__logo{width:54px;height:54px}
+    .ademo-footer__cta{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border-strong);border-radius:999px;
+      padding:11px 22px;font-size:14px;font-weight:500;color:var(--text);transition:background .25s,border-color .25s}
+    .ademo-footer__cta:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.42)}
+    .ademo-footer__cta .arr{font-size:12px;opacity:.8}
+    .ademo-footer__copy{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   </style>
 </head>
 <body>
 
-  <!-- ================= NAVBAR ================= -->
-  <header class="nav" id="nav" data-reveal-instant>
-    <div class="nav__inner">
-      <a class="nav__brand" href="https://www.coroambra.com/" aria-label="CoroAmbra home">
-        <img class="nav__wordmark" src="assets/wordmark.png" alt="CoroAmbra" />
-      </a>
-      <nav class="nav__links" aria-label="Primary">
-        <a href="https://www.coroambra.com/#works">Demos</a>
-        <a href="https://www.coroambra.com/#services">Services</a>
-        <a href="https://www.coroambra.com/about">About Us</a>
-        <a href="https://www.coroambra.com/contact">Contact</a>
-      </nav>
-      <a class="btn nav__cta" href="https://cal.com/coroambra/consultation" target="_blank" rel="noopener noreferrer">Get Free Consultation</a>
-      <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false">
-        <span></span><span></span>
-      </button>
-    </div>
+  <!-- Minimal nav: centered wordmark, intentionally NOT a link -->
+  <header class="ademo-nav">
+    <img class="ademo-nav__logo" src="assets/wordmark.png" alt="CoroAmbra" />
   </header>
-
-  <!-- Mobile drawer -->
-  <div class="drawer" id="drawer" aria-hidden="true">
-    <div class="drawer__backdrop" data-drawer-close></div>
-    <div class="drawer__panel">
-      <button class="drawer__close" data-drawer-close aria-label="Close menu">&times;</button>
-      <a href="https://www.coroambra.com/#works" data-drawer-close>Demos</a>
-      <a href="https://www.coroambra.com/#services" data-drawer-close>Services</a>
-      <a href="https://www.coroambra.com/about" data-drawer-close>About Us</a>
-      <a href="https://www.coroambra.com/contact" data-drawer-close>Contact</a>
-      <a class="btn btn--light btn--block" href="https://cal.com/coroambra/consultation" target="_blank" rel="noopener noreferrer" data-drawer-close>Get Free Consultation</a>
-    </div>
-  </div>
 
   <!-- ================= DEMO STAGE ================= -->
   <main class="demo">
     <div class="demo__bg" aria-hidden="true"><img src="assets/why-bg.jpg" alt="" /></div>
     <div class="container demo__wrap">
 
-      <!-- LEFT: copy -->
       <div class="demo__intro-col">
         <span class="pill pill--label">LIVE DEMO</span>
         <h1 class="demo__title">Talk to Ayesha</h1>
@@ -133,9 +95,8 @@
         </div>
       </div>
 
-      <!-- RIGHT: the call -->
       <section class="callcard" aria-label="Voice demo">
-        <div class="orb" id="orb"><span class="orb__dot"></span></div>
+        <canvas id="siri" class="siriwave" aria-hidden="true"></canvas>
         <p class="callstatus" id="callStatus">Tap to start</p>
         <button class="talkbtn" id="talkBtn" type="button">
           <span class="talkbtn__mic" aria-hidden="true"></span>
@@ -147,44 +108,19 @@
     </div>
   </main>
 
-  <!-- ================= FOOTER ================= -->
-  <footer class="footer footer--compact">
-    <div class="container footer__grid">
-      <div class="footer__brand">
-        <a class="nav__brand footer__brand-logo" href="https://www.coroambra.com/">
-          <img class="nav__wordmark" src="assets/wordmark.png" alt="CoroAmbra" />
-        </a>
-        <p class="footer__wordmark">Clear. Precise. Automated.</p>
-        <div class="footer__object" aria-hidden="true"><img src="assets/ca-glass.png" alt="" /></div>
-      </div>
-      <div class="footer__col">
-        <p class="eyebrow">NAVIGATION</p>
-        <nav>
-          <a href="https://www.coroambra.com/">Home</a>
-          <a href="https://www.coroambra.com/#works">Demos</a>
-          <a href="https://www.coroambra.com/about">About</a>
-          <a href="https://www.coroambra.com/contact">Contact</a>
-        </nav>
-      </div>
-      <div class="footer__col footer__contact">
-        <p class="eyebrow">SOCIALS</p>
-        <div class="footer__socials">
-          <a href="https://www.facebook.com/share/1JM1egYp4V/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="soc"><img src="assets/social/facebook.svg" alt="" /></a>
-          <a href="https://www.linkedin.com/company/coroambra/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="soc"><img src="assets/social/linkedin.svg" alt="" /></a>
-          <a href="https://www.instagram.com/coroambra" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="soc"><img src="assets/social/instagram.svg" alt="" /></a>
-        </div>
-        <p class="eyebrow">EMAIL</p>
-        <a class="footer__big" href="mailto:malik@coroambra.com">malik@coroambra.com</a>
-      </div>
-    </div>
-    <div class="container footer__bottom">
-      <div class="footer__bottom-inner">
-        <span>&copy; 2026 CoroAmbra. All Rights reserved.</span>
-        <span>CoroAmbra AI Agency &middot; Toronto</span>
-      </div>
+  <!-- ================= MINIMAL FOOTER ================= -->
+  <footer class="ademo-footer">
+    <div class="container ademo-footer__inner">
+      <div class="ademo-footer__logo" data-liquid-logo data-logo-key="caMark" data-logo="assets/ca-mark.png" data-preset="platinum" data-scale="1" aria-label="CoroAmbra"></div>
+      <a class="ademo-footer__cta" href="https://www.coroambra.com" target="_blank" rel="noopener noreferrer">Explore CoroAmbra <span class="arr" aria-hidden="true">&#8599;</span></a>
+      <div class="ademo-footer__copy">&copy; 2026 CoroAmbra &middot; Toronto</div>
     </div>
   </footer>
 
+  <!-- animated liquid CA mark (self-contained, CSP-safe) -->
+  <script src="js/ca-logo-data.js"></script>
+  <script src="js/liquid-logo.js"></script>
+  <!-- Vapi call + siri-wave -->
   <script type="module" src="js/demo.js"></script>
 </body>
 </html>
