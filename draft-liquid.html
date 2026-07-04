@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Talk to Ayesha | CoroAmbra AI Voice Demo</title>
+  <title>Talk to Ayesha | Draft B: Liquid Effect</title>
+  <meta name="robots" content="noindex" />
   <meta name="description" content="Talk live to Ayesha, an AI voice receptionist for a Lahore real estate office. Tap, allow your mic, and speak to her in Urdu." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -98,10 +99,12 @@
     .ademo-footer__cta .arr{font-size:12px;opacity:.8}
     .ademo-footer__copy{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   </style>
+  <style>#liquidCanvas{position:fixed;inset:0;z-index:0;width:100%;height:100%}#glassCanvas{pointer-events:none}</style>
 </head>
 <body>
 
-  <!-- Liquid-glass wallpaper (drawn by js/liquid-glass.js; hidden until WebGL boots) -->
+  <!-- DRAFT B: live liquid wallpaper + transparent liquid-glass overlay -->
+  <canvas id="liquidCanvas" aria-hidden="true"></canvas>
   <canvas id="glassCanvas" aria-hidden="true"></canvas>
 
   <!-- Nav: real site bar, logo-only, centered, intentionally NOT a link -->
@@ -158,8 +161,9 @@
     </div>
   </footer>
 
-  <!-- liquid-glass wallpaper + call-card glass (bubbbly shader port, CSP-safe) -->
-  <script src="js/liquid-glass.js"></script>
+  <!-- DRAFT B: glass overlay (classic) + liquid bg engine (module, jsDelivr) -->
+  <script src="js/liquid-glass-overlay.js"></script>
+  <script type="module" src="js/liquid-bg-draft.js"></script>
   <!-- animated liquid CA mark (self-contained, CSP-safe) -->
   <script src="js/ca-logo-data.js"></script>
   <script src="js/liquid-logo.js"></script>

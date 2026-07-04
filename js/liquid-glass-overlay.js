@@ -1,14 +1,10 @@
-// liquid-glass.js — CoroAmbra liquid-glass wallpaper engine.
-// Faithful port of the bubbbly.com "GitHub Glass Card" WebGL shader
-// (https://www.bubbbly.com/app/github-glass-badge.html): a fullscreen canvas
-// draws the wallpaper (cover-fit) plus a refractive liquid-glass pane under
-// the .callcard — superellipse SDF, edge lens distortion, 9×9 soft blur and
-// rim lighting. Two CoroAmbra additions: per-wallpaper dimming (uDim) so the
-// white text stays readable, and a 3-wallpaper switcher (nav button, persisted
-// in localStorage). Classic script, CSP-safe (script-src 'self').
-//
-// Success => <html class="glass-on">  (CSS strips the card's own background)
-// No WebGL => <html class="glass-fallback"> (CSS frosted glass + img wallpaper)
+// liquid-glass-overlay.js — DRAFT B glass layer for the Ayesha demo.
+// Same bubbbly liquid-glass shader as js/liquid-glass.js, but rendered as a
+// TRANSPARENT OVERLAY: outside the call card the canvas is fully transparent so
+// the live liquid background (js/liquid-bg-draft.js) shows through; inside the
+// card the glass refracts a static copy of the SAME wallpaper (the heavy blur
+// makes the missing ripples imperceptible). Exposes window.__setGlassWallpaper(n)
+// for the wallpaper cycle button (wired in liquid-bg-draft.js).
 
 (function () {
   "use strict";
@@ -22,11 +18,8 @@
 
   var canvas = document.getElementById("glassCanvas");
   var card = document.querySelector(".callcard");
-  var wallBtn = document.getElementById("wallBtn");
-  var fallbackImg = document.querySelector(".demo__bg img");
 
-  var current = (function () {
-    // ?wp=1|2|3 deep-links a wallpaper (and is handy for QA); else last choice; else 1
+  function initialWallpaper() {
     try {
       var q = parseInt(new URLSearchParams(location.search).get("wp"), 10);
       if (WALLPAPERS[q]) return q;
@@ -35,29 +28,14 @@
     } catch (e) {
       return 1;
     }
-  })();
-
-  function saveChoice() {
-    try { localStorage.setItem(STORE_KEY, String(current)); } catch (e) {}
   }
 
-  /* ---------- fallback path (no WebGL): swap the section img instead ---------- */
-  function enterFallback() {
+  var gl = canvas && canvas.getContext("webgl", { antialias: false, alpha: true });
+  if (!gl || !card) {
     document.documentElement.classList.add("glass-fallback");
-    if (fallbackImg) fallbackImg.src = WALLPAPERS[current].src;
-    if (wallBtn) {
-      wallBtn.addEventListener("click", function () {
-        current = (current % 3) + 1;
-        saveChoice();
-        if (fallbackImg) fallbackImg.src = WALLPAPERS[current].src;
-      });
-    }
+    return;
   }
 
-  var gl = canvas && canvas.getContext("webgl", { antialias: false });
-  if (!gl || !card) { enterFallback(); return; }
-
-  /* =================== shaders (bubbbly port + uDim/uPx) =================== */
   var VS = "attribute vec2 position; void main(){ gl_Position = vec4(position, 0.0, 1.0); }";
 
   var FS = [
@@ -65,11 +43,11 @@
     "",
     "uniform vec3 iResolution;",
     "uniform vec2 uImgRes;",
-    "uniform vec2 uCardPos;   // card centre in gl pixels (y up)",
-    "uniform vec2 uCardHalf;  // half width / half height in pixels",
-    "uniform float uWhite;    // 0..1 whiteness",
-    "uniform float uDim;      // wallpaper dim factor (CoroAmbra: text legibility)",
-    "uniform float uPx;       // device px per CSS px (keeps blur radius DPR-true)",
+    "uniform vec2 uCardPos;",
+    "uniform vec2 uCardHalf;",
+    "uniform float uWhite;",
+    "uniform float uDim;",
+    "uniform float uPx;",
     "uniform sampler2D iChannel0;",
     "",
     "vec2 coverUv(vec2 uv) {",
@@ -93,36 +71,35 @@
     "  float rb3 = clamp((1.5 - roundedBox * 1.1) * 2.0, 0.0, 1.0) -",
     "              clamp((1.0 - roundedBox * 1.1) * 2.0, 0.0, 1.0);",
     "",
+    "  float transition = smoothstep(0.0, 1.0, rb1 + rb2);",
+    "  if (transition <= 0.0) { gl_FragColor = vec4(0.0); return; }",
+    "",
     "  vec4 bg = texture2D(iChannel0, coverUv(uv));",
     "  bg.rgb *= uDim;",
-    "  float transition = smoothstep(0.0, 1.0, rb1 + rb2);",
-    "  vec4 color = bg;",
     "",
-    "  if (transition > 0.0) {",
-    "    vec2 cuv = uCardPos / iResolution.xy;",
-    "    vec2 lens = cuv + (uv - cuv) * (1.0 - roundedBox * 0.22);",
+    "  vec2 cuv = uCardPos / iResolution.xy;",
+    "  vec2 lens = cuv + (uv - cuv) * (1.0 - roundedBox * 0.22);",
     "",
-    "    vec4 acc = vec4(0.0);",
-    "    float total = 0.0;",
-    "    for (float x = -4.0; x <= 4.0; x++) {",
-    "      for (float y = -4.0; y <= 4.0; y++) {",
-    "        vec2 off = vec2(x, y) * 1.2 * uPx / iResolution.xy;",
-    "        acc += texture2D(iChannel0, coverUv(lens + off));",
-    "        total += 1.0;",
-    "      }",
+    "  vec4 acc = vec4(0.0);",
+    "  float total = 0.0;",
+    "  for (float x = -4.0; x <= 4.0; x++) {",
+    "    for (float y = -4.0; y <= 4.0; y++) {",
+    "      vec2 off = vec2(x, y) * 1.2 * uPx / iResolution.xy;",
+    "      acc += texture2D(iChannel0, coverUv(lens + off));",
+    "      total += 1.0;",
     "    }",
-    "    acc /= total;",
-    "    acc.rgb *= uDim;",
-    "",
-    "    float dy = uv.y - cuv.y;",
-    "    float gradient = clamp((clamp(dy, 0.0, 0.2) + 0.1) / 2.0, 0.0, 1.0) +",
-    "                     clamp((clamp(-dy, -1000.0, 0.2) * rb3 + 0.1) / 2.0, 0.0, 1.0);",
-    "    vec4 lighting = clamp(acc + vec4(rb1) * gradient + vec4(rb2) * 0.3, 0.0, 1.0);",
-    "",
-    "    lighting = mix(lighting, vec4(1.0), uWhite * 0.97);",
-    "    color = mix(bg, lighting, transition);",
     "  }",
-    "  gl_FragColor = vec4(color.rgb, 1.0);",
+    "  acc /= total;",
+    "  acc.rgb *= uDim;",
+    "",
+    "  float dy = uv.y - cuv.y;",
+    "  float gradient = clamp((clamp(dy, 0.0, 0.2) + 0.1) / 2.0, 0.0, 1.0) +",
+    "                   clamp((clamp(-dy, -1000.0, 0.2) * rb3 + 0.1) / 2.0, 0.0, 1.0);",
+    "  vec4 lighting = clamp(acc + vec4(rb1) * gradient + vec4(rb2) * 0.3, 0.0, 1.0);",
+    "  lighting = mix(lighting, vec4(1.0), uWhite * 0.97);",
+    "",
+    "  vec4 color = mix(bg, lighting, transition);",
+    "  gl_FragColor = vec4(color.rgb * transition, transition);   // premultiplied alpha",
     "}",
   ].join("\n");
 
@@ -131,7 +108,7 @@
     gl.shaderSource(sh, source);
     gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      console.error("liquid-glass shader error:", gl.getShaderInfoLog(sh));
+      console.error("liquid-glass-overlay shader error:", gl.getShaderInfoLog(sh));
       gl.deleteShader(sh);
       return null;
     }
@@ -140,13 +117,16 @@
 
   var vs = createShader(gl.VERTEX_SHADER, VS);
   var fs = createShader(gl.FRAGMENT_SHADER, FS);
-  if (!vs || !fs) { enterFallback(); return; }
+  if (!vs || !fs) { document.documentElement.classList.add("glass-fallback"); return; }
 
   var program = gl.createProgram();
   gl.attachShader(program, vs);
   gl.attachShader(program, fs);
   gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { enterFallback(); return; }
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    document.documentElement.classList.add("glass-fallback");
+    return;
+  }
   gl.useProgram(program);
 
   var buffer = gl.createBuffer();
@@ -169,7 +149,7 @@
 
   var texture = gl.createTexture();
   var imgW = 2560, imgH = 1429;
-  var dim = WALLPAPERS[current].dim;
+  var dim = 1.0;
   var textureReady = false;
 
   function uploadTexture(source, w, h) {
@@ -185,10 +165,8 @@
     textureReady = true;
   }
 
-  function setWallpaper(n) {
+  function setGlassWallpaper(n) {
     if (!WALLPAPERS[n]) return;
-    current = n;
-    saveChoice();
     var im = new Image();
     im.onload = function () {
       uploadTexture(im, im.naturalWidth, im.naturalHeight);
@@ -196,17 +174,8 @@
     };
     im.src = WALLPAPERS[n].src;
   }
+  window.__setGlassWallpaper = setGlassWallpaper;
 
-  if (wallBtn) {
-    wallBtn.addEventListener("click", function () {
-      setWallpaper((current % 3) + 1);
-    });
-  }
-
-  /* =================== sizing + render loop =================== */
-  // Mobile URL bars resize the viewport DURING scroll without always firing
-  // "resize", which stretched the canvas and made the glass drift off the card.
-  // Fix: size from the canvas's real CSS box and re-check every frame (cheap).
   var DPR = 1;
   function syncCanvasSize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -221,15 +190,16 @@
 
   function render() {
     syncCanvasSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     if (textureReady) {
       var rect = card.getBoundingClientRect();
-      var cx = (rect.left + rect.width / 2) * DPR;
-      var cy = canvas.height - (rect.top + rect.height / 2) * DPR;
-
-      gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform3f(U.resolution, canvas.width, canvas.height, 1.0);
       gl.uniform2f(U.imgRes, imgW, imgH);
-      gl.uniform2f(U.cardPos, cx, cy);
+      gl.uniform2f(U.cardPos,
+        (rect.left + rect.width / 2) * DPR,
+        canvas.height - (rect.top + rect.height / 2) * DPR);
       gl.uniform2f(U.cardHalf, (rect.width / 2 + 4) * DPR, (rect.height / 2 + 4) * DPR);
       gl.uniform1f(U.white, 0.0);
       gl.uniform1f(U.dim, dim);
@@ -243,13 +213,6 @@
   }
 
   document.documentElement.classList.add("glass-on");
-  setWallpaper(current);
+  setGlassWallpaper(initialWallpaper());
   render();
-
-  // prefetch the other wallpapers so the nav toggle swaps instantly
-  window.addEventListener("load", function () {
-    for (var n = 1; n <= 3; n++) {
-      if (n !== current) { var im = new Image(); im.src = WALLPAPERS[n].src; }
-    }
-  });
 })();

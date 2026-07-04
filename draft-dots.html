@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Talk to Ayesha | CoroAmbra AI Voice Demo</title>
+  <title>Talk to Ayesha | Draft A: Dotted Surface</title>
+  <meta name="robots" content="noindex" />
   <meta name="description" content="Talk live to Ayesha, an AI voice receptionist for a Lahore real estate office. Tap, allow your mic, and speak to her in Urdu." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -98,6 +99,7 @@
     .ademo-footer__cta .arr{font-size:12px;opacity:.8}
     .ademo-footer__copy{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   </style>
+  <style>#glassCanvas{pointer-events:none}</style>
 </head>
 <body>
 
@@ -107,13 +109,6 @@
   <!-- Nav: real site bar, logo-only, centered, intentionally NOT a link -->
   <header class="nav" id="nav">
     <div class="nav__inner nav__inner--solo">
-      <button class="wallbtn" id="wallBtn" type="button" aria-label="Change wallpaper" title="Change wallpaper">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="3" />
-          <circle cx="8.5" cy="8.5" r="1.6" />
-          <path d="M21 15l-5-5L5 21" />
-        </svg>
-      </button>
       <div class="nav__brand nav__brand--static" aria-label="CoroAmbra">
         <img class="nav__wordmark" src="assets/wordmark.png" alt="CoroAmbra" />
       </div>
@@ -158,8 +153,8 @@
     </div>
   </footer>
 
-  <!-- liquid-glass wallpaper + call-card glass (bubbbly shader port, CSP-safe) -->
-  <script src="js/liquid-glass.js"></script>
+  <!-- DRAFT A: dotted-surface bg + liquid-glass card (three.js, CSP-safe) -->
+  <script type="module" src="js/dotted-surface-draft.js"></script>
   <!-- animated liquid CA mark (self-contained, CSP-safe) -->
   <script src="js/ca-logo-data.js"></script>
   <script src="js/liquid-logo.js"></script>
