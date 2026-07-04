@@ -1,8 +1,9 @@
-// dotted-surface-draft.js — DRAFT A background for the Ayesha demo.
-// The 21st.dev "Dotted Surface" (sshahaider) three.js particle wave, ported to
-// vanilla JS with the component's exact parameters, rendered into a texture that
-// the bubbbly liquid-glass card shader then refracts. One canvas, one WebGL
-// context, no per-frame CPU copies. CSP-safe: three.js from esm.sh (allowed).
+// nebula-glass.js — LIVE background engine for the Ayesha demo.
+// The 21st.dev "Interactive Nebula Shader" (dhileepkumargm/liquid-shader),
+// ported to vanilla three.js with the component's exact GLSL and defaults
+// (default palette, center dimming on), rendered into a texture that the
+// bubbbly liquid-glass card shader refracts. One canvas, one WebGL context.
+// CSP-safe: three.js from esm.sh (allowed), no inline scripts.
 import * as THREE from "https://esm.sh/three@0.170.0";
 
 const canvas = document.getElementById("glassCanvas");
@@ -10,55 +11,103 @@ const card = document.querySelector(".callcard");
 if (canvas && card) boot();
 
 function boot() {
-  /* ---------- renderer ---------- */
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
   } catch (e) {
     document.documentElement.classList.add("glass-fallback");
     return;
   }
-  const MAX_DPR = 2;
 
-  /* ---------- dotted surface scene (exact component parameters) ---------- */
-  const SEPARATION = 150;
-  const AMOUNTX = 40;
-  const AMOUNTY = 60;
+  /* ---------- nebula scene (exact component shader + defaults) ---------- */
+  const nebulaUniforms = {
+    iTime: { value: 0 },
+    iResolution: { value: new THREE.Vector2() },
+    iMouse: { value: new THREE.Vector2() },
+    hasActiveReminders: { value: false },
+    hasUpcomingReminders: { value: false },
+    disableCenterDimming: { value: false },
+  };
 
-  const dotsScene = new THREE.Scene();
-  dotsScene.fog = new THREE.Fog(0xffffff, 2000, 10000);
-  dotsScene.background = new THREE.Color(0x010004); // page --bg behind the dots
+  const nebulaMat = new THREE.ShaderMaterial({
+    uniforms: nebulaUniforms,
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      precision mediump float;
+      uniform vec2 iResolution;
+      uniform float iTime;
+      uniform vec2 iMouse;
+      uniform bool hasActiveReminders;
+      uniform bool hasUpcomingReminders;
+      uniform bool disableCenterDimming;
+      varying vec2 vUv;
 
-  const dotsCam = new THREE.PerspectiveCamera(60, 1, 1, 10000);
-  dotsCam.position.set(0, 355, 1220);
+      #define t iTime
+      mat2 m(float a){ float c=cos(a), s=sin(a); return mat2(c,-s,s,c); }
+      float map(vec3 p){
+        p.xz *= m(t*0.4);
+        p.xy *= m(t*0.3);
+        vec3 q = p*2. + t;
+        return length(p + vec3(sin(t*0.7))) * log(length(p)+1.0)
+             + sin(q.x + sin(q.z + sin(q.y))) * 0.5 - 1.0;
+      }
 
-  const positions = [];
-  const colors = [];
-  const geometry = new THREE.BufferGeometry();
-  for (let ix = 0; ix < AMOUNTX; ix++) {
-    for (let iy = 0; iy < AMOUNTY; iy++) {
-      const x = ix * SEPARATION - (AMOUNTX * SEPARATION) / 2;
-      const z = iy * SEPARATION - (AMOUNTY * SEPARATION) / 2;
-      positions.push(x, 0, z);
-      colors.push(200, 200, 200); // component's dark-theme values (clamp to white)
-    }
-  }
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+      void mainImage(out vec4 O, in vec2 fragCoord) {
+        vec2 uv = fragCoord / min(iResolution.x, iResolution.y) - vec2(.9, .5);
+        uv.x += .4;
+        vec3 col = vec3(0.0);
+        float d = 2.5;
 
-  const material = new THREE.PointsMaterial({
-    size: 8,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.8,
-    sizeAttenuation: true,
+        for (int i = 0; i <= 5; i++) {
+          vec3 p = vec3(0,0,5.) + normalize(vec3(uv, -1.)) * d;
+          float rz = map(p);
+          float f  = clamp((rz - map(p + 0.1)) * 0.5, -0.1, 1.0);
+
+          vec3 base = hasActiveReminders
+            ? vec3(0.05,0.2,0.5) + vec3(4.0,2.0,5.0)*f
+            : hasUpcomingReminders
+            ? vec3(0.05,0.3,0.1) + vec3(2.0,5.0,1.0)*f
+            : vec3(0.1,0.3,0.4) + vec3(5.0,2.5,3.0)*f;
+
+          col = col * base + smoothstep(2.5, 0.0, rz) * 0.7 * base;
+          d += min(rz, 1.0);
+        }
+
+        float dist   = distance(fragCoord, iResolution*0.5);
+        float radius = min(iResolution.x, iResolution.y) * 0.5;
+        float dim    = disableCenterDimming
+                     ? 1.0
+                     : smoothstep(radius*0.3, radius*0.5, dist);
+
+        O = vec4(col, 1.0);
+        if (!disableCenterDimming) {
+          O.rgb = mix(O.rgb * 0.3, O.rgb, dim);
+        }
+      }
+
+      void main() {
+        mainImage(gl_FragColor, vUv * iResolution);
+      }
+    `,
   });
-  dotsScene.add(new THREE.Points(geometry, material));
-  let count = 0;
 
-  /* ---------- glass pass (bubbbly shader, sampling the dots render target) ---------- */
+  const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const nebulaScene = new THREE.Scene();
+  nebulaScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), nebulaMat));
+
+  const clock = new THREE.Clock();
+  window.addEventListener("mousemove", (e) => {
+    nebulaUniforms.iMouse.value.set(e.clientX, window.innerHeight - e.clientY);
+  });
+
+  /* ---------- glass pass (bubbbly shader, sampling the nebula texture) ---------- */
   const glassScene = new THREE.Scene();
-  const glassCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   let rt = null;
 
   const glassUniforms = {
@@ -67,7 +116,7 @@ function boot() {
     uCardPos: { value: new THREE.Vector2(0, 0) },
     uCardHalf: { value: new THREE.Vector2(1, 1) },
     uWhite: { value: 0.0 },
-    uDim: { value: 1.0 }, // dots bg is already dark
+    uDim: { value: 1.0 },
     uPx: { value: 1.0 },
     iChannel0: { value: null },
   };
@@ -145,7 +194,7 @@ void main() {
   /* ---------- sizing (per-frame: survives mobile URL-bar collapse) ---------- */
   let DPR = 1;
   function syncSize() {
-    DPR = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     const bw = Math.round(w * DPR);
@@ -153,8 +202,7 @@ void main() {
     if (canvas.width !== bw || canvas.height !== bh) {
       renderer.setPixelRatio(DPR);
       renderer.setSize(w, h, false);
-      dotsCam.aspect = w / Math.max(1, h);
-      dotsCam.updateProjectionMatrix();
+      nebulaUniforms.iResolution.value.set(w, h); // component uses CSS-px resolution
       if (rt) rt.dispose();
       rt = new THREE.WebGLRenderTarget(bw, bh);
       glassUniforms.iChannel0.value = rt.texture;
@@ -167,25 +215,12 @@ void main() {
     syncSize();
     if (!rt) return;
 
-    // exact component wave animation
-    const pos = geometry.attributes.position;
-    const arr = pos.array;
-    let i = 0;
-    for (let ix = 0; ix < AMOUNTX; ix++) {
-      for (let iy = 0; iy < AMOUNTY; iy++) {
-        arr[i * 3 + 1] = Math.sin((ix + count) * 0.3) * 50 + Math.sin((iy + count) * 0.5) * 50;
-        i++;
-      }
-    }
-    pos.needsUpdate = true;
-    count += 0.1;
+    nebulaUniforms.iTime.value = clock.getElapsedTime();
 
-    // pass 1: dots into the texture
     renderer.setRenderTarget(rt);
-    renderer.render(dotsScene, dotsCam);
+    renderer.render(nebulaScene, quadCam);
     renderer.setRenderTarget(null);
 
-    // pass 2: liquid glass over it, tracking the call card
     const rect = card.getBoundingClientRect();
     glassUniforms.iResolution.value.set(canvas.width, canvas.height, 1);
     glassUniforms.uImgRes.value.set(canvas.width, canvas.height);
@@ -195,7 +230,7 @@ void main() {
     );
     glassUniforms.uCardHalf.value.set((rect.width / 2 + 4) * DPR, (rect.height / 2 + 4) * DPR);
     glassUniforms.uPx.value = DPR;
-    renderer.render(glassScene, glassCam);
+    renderer.render(glassScene, quadCam);
   }
 
   document.documentElement.classList.add("glass-on");

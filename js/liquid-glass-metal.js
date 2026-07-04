@@ -1,34 +1,17 @@
-// liquid-glass-overlay.js — DRAFT B glass layer for the Ayesha demo.
-// Same bubbbly liquid-glass shader as js/liquid-glass.js, but rendered as a
-// TRANSPARENT OVERLAY: outside the call card the canvas is fully transparent so
-// the live liquid background (js/liquid-bg-draft.js) shows through; inside the
-// card the glass refracts a static copy of the SAME wallpaper (the heavy blur
-// makes the missing ripples imperceptible). Exposes window.__setGlassWallpaper(n)
-// for the wallpaper cycle button (wired in liquid-bg-draft.js).
+// liquid-glass-metal.js — glass layer for the liquid-metal DRAFT.
+// Same bubbbly liquid-glass shader, rendered as a TRANSPARENT OVERLAY above the
+// @paper-design LiquidMetal backdrop (js/liquid-metal-hero.js). The glass
+// texture is a snapshot of the metal canvas (window.__metalCanvas, created with
+// preserveDrawingBuffer) refreshed every 500ms: inside the 9x9 blur the slow
+// refresh is imperceptible, and it costs 2 texture uploads/sec instead of 60.
 
 (function () {
   "use strict";
 
-  var WALLPAPERS = {
-    1: { src: "assets/wallpapers/1.jpg", dim: 0.8 },
-    2: { src: "assets/wallpapers/2.jpg", dim: 0.9 },
-    3: { src: "assets/wallpapers/3.jpg", dim: 0.5 },
-  };
-  var STORE_KEY = "ayesha_wallpaper";
+  var SNAPSHOT_MS = 500;
 
   var canvas = document.getElementById("glassCanvas");
   var card = document.querySelector(".callcard");
-
-  function initialWallpaper() {
-    try {
-      var q = parseInt(new URLSearchParams(location.search).get("wp"), 10);
-      if (WALLPAPERS[q]) return q;
-      var v = parseInt(localStorage.getItem(STORE_KEY), 10);
-      return WALLPAPERS[v] ? v : 1;
-    } catch (e) {
-      return 1;
-    }
-  }
 
   var gl = canvas && canvas.getContext("webgl", { antialias: false, alpha: true });
   if (!gl || !card) {
@@ -108,7 +91,7 @@
     gl.shaderSource(sh, source);
     gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      console.error("liquid-glass-overlay shader error:", gl.getShaderInfoLog(sh));
+      console.error("liquid-glass-metal shader error:", gl.getShaderInfoLog(sh));
       gl.deleteShader(sh);
       return null;
     }
@@ -148,33 +131,26 @@
   };
 
   var texture = gl.createTexture();
-  var imgW = 2560, imgH = 1429;
-  var dim = 1.0;
+  var imgW = 1, imgH = 1;
   var textureReady = false;
+  var lastSnapshot = 0;
 
-  function uploadTexture(source, w, h) {
-    imgW = w;
-    imgH = h;
+  function snapshotMetal(now) {
+    var src = window.__metalCanvas;
+    if (!src || !src.width || !src.height) return;
+    if (now - lastSnapshot < SNAPSHOT_MS) return;
+    lastSnapshot = now;
+    imgW = src.width;
+    imgH = src.height;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     textureReady = true;
   }
-
-  function setGlassWallpaper(n) {
-    if (!WALLPAPERS[n]) return;
-    var im = new Image();
-    im.onload = function () {
-      uploadTexture(im, im.naturalWidth, im.naturalHeight);
-      dim = WALLPAPERS[n].dim;
-    };
-    im.src = WALLPAPERS[n].src;
-  }
-  window.__setGlassWallpaper = setGlassWallpaper;
 
   var DPR = 1;
   function syncCanvasSize() {
@@ -188,31 +164,30 @@
   }
   syncCanvasSize();
 
-  function render() {
+  function render(now) {
+    requestAnimationFrame(render);
     syncCanvasSize();
+    snapshotMetal(now || 0);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    if (textureReady) {
-      var rect = card.getBoundingClientRect();
-      gl.uniform3f(U.resolution, canvas.width, canvas.height, 1.0);
-      gl.uniform2f(U.imgRes, imgW, imgH);
-      gl.uniform2f(U.cardPos,
-        (rect.left + rect.width / 2) * DPR,
-        canvas.height - (rect.top + rect.height / 2) * DPR);
-      gl.uniform2f(U.cardHalf, (rect.width / 2 + 4) * DPR, (rect.height / 2 + 4) * DPR);
-      gl.uniform1f(U.white, 0.0);
-      gl.uniform1f(U.dim, dim);
-      gl.uniform1f(U.px, DPR);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.uniform1i(U.texture, 0);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
-    requestAnimationFrame(render);
+    if (!textureReady) return;
+    var rect = card.getBoundingClientRect();
+    gl.uniform3f(U.resolution, canvas.width, canvas.height, 1.0);
+    gl.uniform2f(U.imgRes, imgW, imgH);
+    gl.uniform2f(U.cardPos,
+      (rect.left + rect.width / 2) * DPR,
+      canvas.height - (rect.top + rect.height / 2) * DPR);
+    gl.uniform2f(U.cardHalf, (rect.width / 2 + 4) * DPR, (rect.height / 2 + 4) * DPR);
+    gl.uniform1f(U.white, 0.0);
+    gl.uniform1f(U.dim, 0.62);   // matches the #metalScrim dimming on the page
+    gl.uniform1f(U.px, DPR);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(U.texture, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
   document.documentElement.classList.add("glass-on");
-  setGlassWallpaper(initialWallpaper());
-  render();
+  requestAnimationFrame(render);
 })();

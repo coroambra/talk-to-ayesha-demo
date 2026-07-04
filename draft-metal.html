@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Talk to Ayesha | Draft A: Dotted Surface</title>
+  <title>Talk to Ayesha | Draft: Liquid Metal</title>
   <meta name="robots" content="noindex" />
   <meta name="description" content="Talk live to Ayesha, an AI voice receptionist for a Lahore real estate office. Tap, allow your mic, and speak to her in Urdu." />
 
@@ -26,19 +26,11 @@
     .nav__inner--solo{justify-content:center;position:relative}
     .nav__brand--static{cursor:default;pointer-events:none}
 
-    /* ---- Liquid-glass wallpaper canvas (js/liquid-glass.js; bubbbly shader port) ---- */
-    #glassCanvas{position:fixed;inset:0;z-index:0;width:100%;height:100%;display:none}   /* 100% not 100vh: tracks the real mobile viewport when the URL bar collapses */
+    /* ---- Glass overlay canvas (js/liquid-glass-metal.js over the metal backdrop) ---- */
+    #glassCanvas{position:fixed;inset:0;z-index:0;width:100%;height:100%;display:none;pointer-events:none}   /* 100% not 100vh: tracks the real mobile viewport when the URL bar collapses */
     html.glass-on #glassCanvas{display:block}
-    html.glass-on .demo__bg{display:none}                 /* shader draws the wallpaper itself */
-    html.glass-fallback .demo__bg{opacity:.5}             /* no WebGL: brighter img wallpaper */
-
-    /* ---- Wallpaper cycle button (nav far-left, bubbbly glass-btn recipe) ---- */
-    .wallbtn{position:absolute;left:var(--gutter);top:50%;transform:translateY(-50%);
-      display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;
-      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.45);color:#fff;
-      transition:background .25s var(--ease),border-color .25s var(--ease)}
-    .wallbtn:hover{background:rgba(255,255,255,.16)}
-    .wallbtn svg{width:16px;height:16px;display:block}
+    html.glass-on .demo__bg{display:none}                 /* the shader canvas IS the background */
+    html.glass-fallback .demo__bg{opacity:.5}             /* no WebGL: brighter img fallback */
 
     /* ---- Demo stage ---- */
     .demo{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:130px 0 90px}
@@ -99,11 +91,18 @@
     .ademo-footer__cta .arr{font-size:12px;opacity:.8}
     .ademo-footer__copy{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   </style>
-  <style>#glassCanvas{pointer-events:none}</style>
+  <style>
+    #metalBg{position:fixed;inset:0;z-index:0;width:100%;height:100%}
+    /* scrim: the raw Backdrop metal is near-white in places and eats the text;
+       dims it evenly (glass shader uses matching uDim .62). Tune or remove. */
+    #metalScrim{position:fixed;inset:0;z-index:0;background:rgba(1,0,4,.38);pointer-events:none}
+  </style>
 </head>
 <body>
 
-  <!-- Liquid-glass wallpaper (drawn by js/liquid-glass.js; hidden until WebGL boots) -->
+  <!-- DRAFT: liquid-metal backdrop (paper-design, unshaped) + transparent liquid-glass overlay -->
+  <div id="metalBg" data-liquid-metal-bg aria-hidden="true"></div>
+  <div id="metalScrim" aria-hidden="true"></div>
   <canvas id="glassCanvas" aria-hidden="true"></canvas>
 
   <!-- Nav: real site bar, logo-only, centered, intentionally NOT a link -->
@@ -153,8 +152,9 @@
     </div>
   </footer>
 
-  <!-- DRAFT A: dotted-surface bg + liquid-glass card (three.js, CSP-safe) -->
-  <script type="module" src="js/dotted-surface-draft.js"></script>
+  <!-- DRAFT: liquid-metal backdrop bundle + glass overlay (both CSP-safe) -->
+  <script src="js/liquid-metal-hero.js"></script>
+  <script src="js/liquid-glass-metal.js"></script>
   <!-- animated liquid CA mark (self-contained, CSP-safe) -->
   <script src="js/ca-logo-data.js"></script>
   <script src="js/liquid-logo.js"></script>
