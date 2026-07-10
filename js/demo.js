@@ -65,6 +65,12 @@ btn.addEventListener("click", async () => {
   if (inCall) { vapi.stop(); return; }
   try {
     btn.disabled = true;
+    // Warm up the mic permission BEFORE starting the call: when the permission
+    // prompt appeared mid-connect, Vapi received no audio and killed the call
+    // (18 of 35 field calls died on the first tap this way). Grant, then connect.
+    setStatus("Allow the microphone to talk...");
+    const warm = await navigator.mediaDevices.getUserMedia({ audio: true });
+    warm.getTracks().forEach((t) => t.stop());
     setStatus("Connecting...");
     await vapi.start(ASSISTANT_ID);
   } catch (e) {
