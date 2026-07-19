@@ -104,6 +104,10 @@
     .voicepill:hover{background:rgba(255,255,255,.11);color:#fff}
     .voicepill.is-active{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff}
     .voicepill:disabled{opacity:.4;cursor:default}
+    /* platinum "Recommended" chip on the No.1 pick (Sarah) */
+    .voicepill__rec{display:inline-block;margin-left:7px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+      padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.55);color:#fff;vertical-align:middle}
+    .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
 
     /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
     @media(max-width:900px){
@@ -167,12 +171,11 @@
         <p class="callstatus" id="callStatus">Tap to start</p>
 
         <div class="voicepick" id="voicePick" role="group" aria-label="Choose a voice">
-          <span class="voicepick__label">Voice &mdash; tap to compare</span>
-          <button class="voicepill is-active" data-voice="nf4MCGNSdM0hxM95ZBQR" data-name="Sarah" type="button">Sarah</button>
-          <button class="voicepill" data-voice="bb2q8Tox15YHJ7ceE9tu" data-name="Liza" type="button">Liza</button>
-          <button class="voicepill" data-voice="299hhEjoz44O862N5H4G" data-name="Victoria" type="button">Victoria</button>
-          <button class="voicepill" data-voice="FzV1qDk1i6MbsuwXpJ46" data-name="Lia" type="button">Lia</button>
-          <button class="voicepill" data-voice="mWqiTfcp72MprLxlUR8h" data-name="Megan" type="button">Megan</button>
+          <span class="voicepick__label">Choose a voice</span>
+          <button class="voicepill is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button">Sarah <span class="voicepill__rec">Recommended</span></button>
+          <button class="voicepill" data-assistant="3c8427da-e75e-4b79-92c2-0b2fc1b51efd" data-name="Victoria" type="button">Victoria</button>
+          <button class="voicepill" data-assistant="eb7eb5b7-1e53-415b-95a2-dbb3921a8144" data-name="Lia" type="button">Lia</button>
+          <span class="voicepick__note">Sarah is our top pick, but try whichever you like &mdash; all three understand English and Urdu.</span>
         </div>
 
         <button class="talkbtn" id="talkBtn" type="button">
