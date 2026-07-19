@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talk to Sarah | CoroAmbra AI Voice Demo (English)</title>
+  <meta name="description" content="Talk live to Sarah, an English-speaking AI voice receptionist for a Lahore real estate office. She understands English and Urdu. Tap, allow your mic, and speak." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="CoroAmbra" />
+  <meta property="og:title" content="Talk to Sarah | CoroAmbra AI Voice Demo (English)" />
+  <meta property="og:description" content="Talk live to an English-speaking AI voice receptionist. She understands English and Urdu. Tap and speak." />
+  <meta property="og:image" content="https://talk-to-ayesha-demo.vercel.app/assets/og-ca-platinum.png" />
+  <meta property="og:image:width" content="800" />
+  <meta property="og:image:height" content="800" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://talk-to-ayesha-demo.vercel.app/assets/og-ca-platinum.png" />
+  <link rel="icon" type="image/png" href="assets/ca-platinum.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <style>
+    html{scroll-behavior:smooth}
+
+    /* ---- Nav: real site bar (.nav from styles.css), logo-only + centered; scroll behaviour in demo.js ---- */
+    .nav__inner--solo{justify-content:center;position:relative}
+    .nav__brand--static{cursor:default;pointer-events:none}
+
+    /* ---- Animated background canvas (js/nebula-glass.js: nebula + liquid-glass card) ---- */
+    #glassCanvas{position:fixed;inset:0;z-index:0;width:100%;height:100%;display:none;pointer-events:none}   /* 100% not 100vh: tracks the real mobile viewport when the URL bar collapses */
+    html.glass-on #glassCanvas{display:block}
+    html.glass-on .demo__bg{display:none}                 /* the shader canvas IS the background */
+    html.glass-fallback .demo__bg{opacity:.5}             /* no WebGL: brighter img fallback */
+
+    /* ---- MOBILE mode (html.glass-mobile, <=900px): nebula INSIDE the glass card only.
+       The canvas is a child of .callcard so it scrolls WITH the card (no drift);
+       page behind stays clean black; low opacity + slow pace for clean text. ---- */
+    html.glass-mobile #glassCanvas{display:none}
+    html.glass-mobile .demo__bg{display:none}
+    html.glass-mobile .callcard{position:relative;overflow:hidden;border-radius:34px}
+    html.glass-mobile .callcard>*:not(.callcard-nebula){position:relative;z-index:1}
+    .callcard-nebula{position:absolute;inset:0;z-index:0;width:100%;height:100%;opacity:.45;pointer-events:none}
+
+    /* ---- Demo stage ---- */
+    .demo{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:130px 0 90px}
+    .demo__bg{position:absolute;inset:0;z-index:0;opacity:.26}
+    .demo__bg img{width:100%;height:100%;object-fit:cover}
+    .demo__bg::after{content:"";position:absolute;inset:0;background:radial-gradient(1200px 600px at 50% 12%,transparent,var(--bg) 72%)}
+    .demo__wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(32px,5vw,80px);align-items:center}
+    @media(max-width:900px){.demo__wrap{grid-template-columns:1fr;gap:36px;text-align:center}}
+
+    .demo__title{font-weight:600;font-size:clamp(40px,6vw,72px);line-height:1.02;letter-spacing:-.03em;margin:18px 0 16px}
+    .demo__intro{color:var(--muted);font-size:clamp(15px,1.5vw,19px);max-width:52ch;margin-inline:0}
+    @media(max-width:900px){.demo__intro{margin-inline:auto}}
+    .demo__hints{margin-top:22px;font-family:var(--mono);font-size:13px;color:var(--faint);line-height:1.9}
+    .demo__hints b{color:var(--text);font-weight:500}
+
+    /* ---- Call card ----
+       Default (no JS): the old Clear-Glass look.
+       html.glass-on: the liquid-glass pane is drawn BY the shader under this exact
+       rect, so the card's own paint is stripped (layout/padding untouched).
+       html.glass-fallback (no WebGL): bubbbly frosted-panel CSS. */
+    .callcard{background:rgba(3,3,7,.5);border:1px solid rgba(255,255,255,.13);border-radius:24px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -30px rgba(0,0,0,.8);
+      padding:clamp(24px,3.5vw,40px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
+    html.glass-on .callcard{background:transparent;border-color:transparent;box-shadow:none;border-radius:34px}
+    /* soft text shadow keeps the small card copy readable over the bright wallpaper (3) */
+    html.glass-on .callstatus,html.glass-on .callnote{text-shadow:0 1px 10px rgba(0,0,0,.4)}
+    html.glass-fallback .callcard{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:26px;
+      box-shadow:0 24px 60px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35);
+      -webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2)}
+
+    /* ---- Siri wave canvas (black pixels drop out via screen blend) ---- */
+    .siriwave{width:min(340px,76vw);height:min(220px,50vw);display:block;margin:0 auto}
+
+    .callstatus{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-height:18px}
+    .callstatus.is-live{color:#fff}
+
+    /* talk button = bubbbly glass-btn recipe (white 7% + white 45% border), like the
+       inner tiles of the bubbbly card; live call = dark wine red glass tint */
+    .talkbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.45);color:#fff;font-weight:600;font-size:16px;
+      padding:16px 34px;border-radius:999px;min-width:220px;
+      transition:transform .25s var(--ease),opacity .25s,background .25s,border-color .25s}
+    .talkbtn:hover{transform:translateY(-2px);background:rgba(255,255,255,.16)}
+    .talkbtn.is-live{background:rgba(94,15,35,.55);border-color:rgba(220,90,110,.5);color:#fff}
+    .talkbtn.is-live:hover{background:rgba(114,19,42,.62)}
+    .talkbtn:disabled{opacity:.6;cursor:default;transform:none}
+    .talkbtn__mic{width:16px;height:16px;border-radius:5px 5px 7px 7px;background:currentColor;position:relative;flex:none}
+    .talkbtn__mic::after{content:"";position:absolute;left:50%;bottom:-6px;width:8px;height:5px;border:2px solid currentColor;border-top:none;border-radius:0 0 6px 6px;transform:translateX(-50%)}
+    .callnote{font-size:12.5px;color:var(--faint);max-width:34ch}
+
+    /* ---- Voice A/B picker (bubbbly glass pills, same recipe as the talk button) ----
+       Lets you switch the ElevenLabs voice before you tap Talk. Disabled while a call
+       is live; the choice is applied as a Vapi assistantOverride on the next call. ---- */
+    .voicepick{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:-2px}
+    .voicepick__label{width:100%;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+    .voicepill{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--muted);
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.22);border-radius:999px;
+      padding:7px 15px;cursor:pointer;transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease)}
+    .voicepill:hover{background:rgba(255,255,255,.11);color:#fff}
+    .voicepill.is-active{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff}
+    .voicepill:disabled{opacity:.4;cursor:default}
+
+    /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
+    @media(max-width:900px){
+      .demo{padding:120px 0 72px}
+      .demo__title{font-size:clamp(34px,8.4vw,44px);margin:16px 0 14px}
+      .demo__intro{font-size:14px}
+      .demo__hints{font-size:12px;margin-top:18px}
+      .pill--label{font-size:11px}
+      .callcard{padding:20px;gap:15px}
+      .siriwave{width:min(300px,68vw);height:min(190px,44vw)}
+      .callstatus{font-size:12px}
+      .talkbtn{padding:14px 28px;font-size:15px;min-width:200px}
+      .callnote{font-size:11.5px}
+      .voicepill{font-size:11.5px;padding:6px 13px}
+    }
+
+    /* ---- Minimal footer ---- */
+    .ademo-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:34px 0 30px}
+    .ademo-footer__inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+    .ademo-footer__logo{width:54px;height:54px}
+    .ademo-footer__cta{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border-strong);border-radius:999px;
+      padding:11px 22px;font-size:14px;font-weight:500;color:var(--text);transition:background .25s,border-color .25s}
+    .ademo-footer__cta:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.42)}
+    .ademo-footer__cta .arr{font-size:12px;opacity:.8}
+    .ademo-footer__copy{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  </style>
+</head>
+<body>
+
+  <!-- Animated nebula background + liquid-glass card (js/nebula-glass.js; hidden until WebGL boots) -->
+  <canvas id="glassCanvas" aria-hidden="true"></canvas>
+
+  <!-- Nav: real site bar, logo-only, centered, intentionally NOT a link -->
+  <header class="nav" id="nav">
+    <div class="nav__inner nav__inner--solo">
+      <div class="nav__brand nav__brand--static" aria-label="CoroAmbra">
+        <img class="nav__wordmark" src="assets/wordmark.png" alt="CoroAmbra" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= DEMO STAGE ================= -->
+  <main class="demo">
+    <div class="demo__bg" aria-hidden="true"><img src="assets/why-bg.jpg" alt="" /></div>
+    <div class="container demo__wrap">
+
+      <div class="demo__intro-col">
+        <span class="pill pill--label">LIVE DEMO &middot; ENGLISH</span>
+        <h1 class="demo__title">Talk to Sarah</h1>
+        <p class="demo__intro">Sarah is an English-speaking AI voice receptionist for a Lahore real estate office. Tap the button, allow your microphone, and speak to her, exactly like a customer would. She understands both English and Urdu, and books the appointment.</p>
+        <div class="demo__hints">
+          Try saying:<br>
+          <b>"Hi, I'm looking for a 10 marla house in DHA Phase 5."</b><br>
+          Or test the Urdu understanding:<br>
+          <b>"DHA mein plot chahiye, budget kya range mein hoga?"</b>
+        </div>
+      </div>
+
+      <section class="callcard" aria-label="Voice demo">
+        <canvas id="siri" class="siriwave" aria-hidden="true"></canvas>
+        <p class="callstatus" id="callStatus">Tap to start</p>
+
+        <div class="voicepick" id="voicePick" role="group" aria-label="Choose a voice">
+          <span class="voicepick__label">Voice &mdash; tap to compare</span>
+          <button class="voicepill is-active" data-voice="nf4MCGNSdM0hxM95ZBQR" data-name="Sarah" type="button">Sarah</button>
+          <button class="voicepill" data-voice="bb2q8Tox15YHJ7ceE9tu" data-name="Liza" type="button">Liza</button>
+          <button class="voicepill" data-voice="299hhEjoz44O862N5H4G" data-name="Victoria" type="button">Victoria</button>
+          <button class="voicepill" data-voice="FzV1qDk1i6MbsuwXpJ46" data-name="Lia" type="button">Lia</button>
+          <button class="voicepill" data-voice="mWqiTfcp72MprLxlUR8h" data-name="Megan" type="button">Megan</button>
+        </div>
+
+        <button class="talkbtn" id="talkBtn" type="button">
+          <span class="talkbtn__mic" aria-hidden="true"></span>
+          <span id="talkLabel">Talk to Sarah</span>
+        </button>
+        <p class="callnote">Please allow microphone access when your browser asks. Works best in Chrome. This is a live AI, not a recording. She understands English and Urdu, and replies in English.</p>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= MINIMAL FOOTER ================= -->
+  <footer class="ademo-footer">
+    <div class="container ademo-footer__inner">
+      <div class="ademo-footer__logo" data-liquid-logo data-logo-key="caMark" data-logo="assets/ca-mark.png" data-preset="platinum" data-scale="1" aria-label="CoroAmbra"></div>
+      <a class="ademo-footer__cta" href="https://www.coroambra.com" target="_blank" rel="noopener noreferrer">Explore CoroAmbra <span class="arr" aria-hidden="true">&#8599;</span></a>
+      <div class="ademo-footer__copy">&copy; 2026 CoroAmbra &middot; Toronto</div>
+    </div>
+  </footer>
+
+  <!-- animated nebula background + liquid-glass call card (three.js via esm.sh, CSP-safe) -->
+  <script type="module" src="js/nebula-glass.js"></script>
+  <!-- animated liquid CA mark (self-contained, CSP-safe) -->
+  <script src="js/ca-logo-data.js"></script>
+  <script src="js/liquid-logo.js"></script>
+  <!-- animated Platinum Frost favicon (desktop tabs; mobile keeps the static PNG) -->
+  <script src="js/liquid-favicon.js"></script>
+  <!-- Vapi call + siri-wave (English assistant + 5-voice A/B) -->
+  <script type="module" src="js/demo-sarah.js"></script>
+</body>
+</html>
