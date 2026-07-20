@@ -145,12 +145,14 @@ vapi.on("error", (e) => {
   siri.setTarget(0);
 });
 
-/* ---- Border Beam (SVG stroke-dash COMET): the beam is N short dashes phased along the pill's
-   rounded-rect stroke, under a sine opacity envelope so it fades softly at BOTH ends. Riding
-   the stroke keeps it ONE beam that follows the rounded corners and loops seamlessly.
-   pathLength=100 makes the dash lengths size-independent; only the rect geometry is re-sized
-   on resize / font load. Tune length+softness with N/seg, speed with dur (= --cbeam-dur). ---- */
-const CBEAM = { N: 15, seg: 2, dur: 7 };
+/* ---- Border Beam (SVG stroke-dash COMET): the beam is a stack of NESTED, CENTRED dashes on
+   the pill's rounded-rect stroke -- one long faint dash draws a single continuous line, and
+   progressively shorter dashes stack on its centre to build brightness -- so the line is
+   UNBROKEN (no dots/beads) and the opacity tapers smoothly to soft ends. Riding the stroke
+   keeps it ONE beam that follows the rounded corners and loops seamlessly. pathLength=100
+   makes lengths size-independent; only the rect geometry is re-sized on resize / font load.
+   Tune with CBEAM: lmax/lmin (length + fade), n (smoothness), op (brightness), dur (speed). ---- */
+const CBEAM = { n: 16, lmax: 30, lmin: 3, dur: 7, op: 0.13 };
 const SVGNS = "http://www.w3.org/2000/svg";
 const cbeam = document.querySelector(".voicepill--beam .cbeam");
 const cbeamTail = cbeam && cbeam.querySelector(".cbeam__tail");
@@ -159,15 +161,17 @@ function buildCbeam() {
   if (!cbeamTail) return;
   cbeamTail.textContent = "";
   cbeamSegs = [];
-  const step = (CBEAM.seg / 100) * CBEAM.dur;                 // time-phase between adjacent dashes
-  for (let i = 0; i < CBEAM.N; i++) {
+  for (let i = 0; i < CBEAM.n; i++) {
+    const t = CBEAM.n === 1 ? 0 : i / (CBEAM.n - 1);
+    const len = CBEAM.lmax - t * (CBEAM.lmax - CBEAM.lmin);       // longest (faint line) -> shortest (bright core)
+    const delay = -((CBEAM.lmax - len) / 2 / 100) * CBEAM.dur;    // keep every dash centred on the same moving point
     const s = document.createElementNS(SVGNS, "rect");
     s.setAttribute("class", "cbeam__seg");
     s.setAttribute("pathLength", "100");
     s.setAttribute("fill", "none");
-    s.style.strokeDasharray = CBEAM.seg + " " + (100 - CBEAM.seg);
-    s.style.animationDelay = (-i * step).toFixed(3) + "s";
-    s.style.opacity = Math.sin((Math.PI * (i + 0.5)) / CBEAM.N).toFixed(3);   // 0 at both ends, 1 in the middle
+    s.style.strokeDasharray = len.toFixed(2) + " " + (100 - len).toFixed(2);
+    s.style.animationDelay = delay.toFixed(3) + "s";
+    s.style.opacity = CBEAM.op;
     cbeamTail.appendChild(s);
     cbeamSegs.push(s);
   }

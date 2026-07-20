@@ -107,13 +107,12 @@
     .voicepill:hover{background:rgba(255,255,255,.05)}
     .voicepill.is-active{background:rgba(255,255,255,.06);border-color:var(--border-strong)}
     .voicepill:disabled{opacity:.45;cursor:default}
-    /* ---- Border Beam on the No.1 pick (Sarah): an SVG stroke-dash COMET. The beam is a row
-       of short dashes phased along the pill's rounded-rect stroke (built in demo-sarah.js),
-       under a sine opacity envelope so it FADES softly to transparent at BOTH ends (a single
-       hard dash looked "hard"; a square offset-path comet bled onto multiple edges on this
-       short pill). Because the dashes ride the stroke itself, it stays ONE beam, follows the
-       rounded corners exactly, and loops seamlessly. Colour via the SVG gradient.
-       Tune in demo-sarah.js: CBEAM.N / CBEAM.seg (length + softness), CBEAM.dur (speed). ---- */
+    /* ---- Border Beam on the No.1 pick (Sarah): an SVG stroke-dash COMET. The beam is a stack
+       of NESTED, centred dashes on the pill's rounded-rect stroke (built in demo-sarah.js) --
+       one long faint dash draws a continuous line, shorter dashes stack on its centre for
+       brightness -- so the line is UNBROKEN (no dots) and fades to soft ends. Riding the stroke
+       keeps it ONE beam that follows the rounded corners exactly and loops seamlessly. Colour
+       via the SVG gradient. Tune in demo-sarah.js CBEAM: lmax/lmin, n, op, dur. ---- */
     .voicepill--beam{position:relative}
     .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter box border so the beam stands out */
     .voicepill__txt{position:relative;z-index:1}
