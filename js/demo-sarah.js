@@ -145,6 +145,27 @@ vapi.on("error", (e) => {
   siri.setTarget(0);
 });
 
+/* ---- Border Beam (magicui comet): drive it with a smooth CLOSED stadium path() instead of
+   offset-path:rect(), whose loop/rotation seam made the comet snap at the corners and jump
+   where the animation restarts. The path starts at the MIDDLE of the top edge (seam on a
+   straight run, tangent continuous) and goes clockwise with semicircle ends, so position AND
+   rotation are continuous the whole way round = seamless. Rebuilt on resize / font load. ---- */
+const cbeam = document.querySelector(".voicepill--beam .cbeam");
+function updateCbeamPath() {
+  if (!cbeam) return;
+  const w = cbeam.offsetWidth, h = cbeam.offsetHeight;
+  if (!w || !h) return;
+  const r = h / 2, mx = w / 2;               // stadium: full-semicircle ends
+  const p = `path("M ${mx} 0 L ${w - r} 0 A ${r} ${r} 0 0 1 ${w - r} ${h} L ${r} ${h} A ${r} ${r} 0 0 1 ${r} 0 Z")`;
+  cbeam.style.setProperty("--cbeam-path", p);
+}
+if (cbeam) {
+  updateCbeamPath();
+  window.addEventListener("resize", updateCbeamPath, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(updateCbeamPath).observe(cbeam.parentElement || cbeam);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateCbeamPath);
+}
+
 /* ---- Navbar: blur on scroll + hide on scroll-down / reveal on scroll-up (same as the site) ---- */
 const nav = document.getElementById("nav");
 let lastY = window.scrollY;

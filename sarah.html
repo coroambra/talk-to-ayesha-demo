@@ -109,10 +109,10 @@
     .voicepill:disabled{opacity:.45;cursor:default}
     /* ---- Border Beam on the No.1 pick (Sarah): vanilla, CSP-safe port of 21st.dev
        @dillionverma / magicui border-beam. A COLOURED gradient comet (orange -> purple ->
-       transparent) runs the pill's border. offset-path: rect(...round) follows the rounded
-       corners natively (Safari 17.2+, Chrome 116+, Firefox 122+), no JS. inset:-1px lands it
-       on the pill's OUTER border. Saved: Design-any-business/saved-components/border-beam-magicui/.
-       Tune: --cbeam-size (comet + corner radius), --cbeam-dur (speed), --cbeam-from / --cbeam-to. ---- */
+       transparent) runs the pill's border. Driven by a JS-built CLOSED stadium path()
+       (demo-sarah.js) for a SEAMLESS loop -- rect() glitched at its seam and corners.
+       inset:-1px lands it on the pill's OUTER border. Saved: Design-any-business/saved-components/border-beam-magicui/.
+       Tune: --cbeam-size (comet length), --cbeam-dur (speed), --cbeam-from / --cbeam-to. ---- */
     .voicepill--beam{position:relative}
     .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter static box border (beats .is-active) so the beam stands out */
     .voicepill__txt{position:relative;z-index:1}
@@ -122,12 +122,12 @@
               mask:linear-gradient(transparent,transparent),linear-gradient(#fff,#fff);
       -webkit-mask-clip:padding-box,border-box;mask-clip:padding-box,border-box;
       -webkit-mask-composite:source-in;mask-composite:intersect}
-    /* Tuned for a tiny pill: small comet + faded on BOTH ends (soft head, not a hard block)
-       so it reads minimal like the reference. Corner radius is DECOUPLED from the comet size
-       (fixed stadium, round 999px) so shrinking the comet still follows the rounded ends. */
+    /* Comet faded on BOTH ends (soft, minimal like the reference). offset-path is a JS-built
+       closed stadium path() (--cbeam-path, set in demo-sarah.js) so the loop and corners are
+       seamless -- rect() snapped at the seam/corners. */
     .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,48)*1px);
       background:linear-gradient(to left,transparent,var(--cbeam-from,#ffaa40),var(--cbeam-to,#9c40ff),transparent);
-      offset-anchor:50% 50%;offset-path:rect(0 auto auto 0 round 999px);
+      offset-anchor:50% 50%;offset-path:var(--cbeam-path);
       animation:cbeam-run calc(var(--cbeam-dur,7)*1s) linear infinite;animation-delay:var(--cbeam-delay,0s)}
     @keyframes cbeam-run{to{offset-distance:100%}}
     @media(prefers-reduced-motion:reduce){.cbeam::after{animation:none;opacity:0}}
