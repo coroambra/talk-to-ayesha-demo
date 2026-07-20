@@ -117,16 +117,18 @@
     .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter static box border (beats .is-active) so the beam stands out */
     .voicepill__txt{position:relative;z-index:1}
     .cbeam{pointer-events:none;position:absolute;inset:-1px;border-radius:inherit;
-      border:calc(var(--cbeam-bw,1.5)*1px) solid transparent;
+      border:calc(var(--cbeam-bw,1)*1px) solid transparent;
       -webkit-mask:linear-gradient(transparent,transparent),linear-gradient(#fff,#fff);
               mask:linear-gradient(transparent,transparent),linear-gradient(#fff,#fff);
       -webkit-mask-clip:padding-box,border-box;mask-clip:padding-box,border-box;
       -webkit-mask-composite:source-in;mask-composite:intersect}
-    .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,40)*1px);
-      background:linear-gradient(to left,var(--cbeam-from,#ffaa40),var(--cbeam-to,#9c40ff),transparent);
-      offset-anchor:calc(var(--cbeam-anchor,90)*1%) 50%;
-      offset-path:rect(0 auto auto 0 round calc(var(--cbeam-size,40)*1px));
-      animation:cbeam-run calc(var(--cbeam-dur,6)*1s) linear infinite;animation-delay:var(--cbeam-delay,0s)}
+    /* Tuned for a tiny pill: small comet + faded on BOTH ends (soft head, not a hard block)
+       so it reads minimal like the reference. Corner radius is DECOUPLED from the comet size
+       (fixed stadium, round 999px) so shrinking the comet still follows the rounded ends. */
+    .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,24)*1px);
+      background:linear-gradient(to left,transparent,var(--cbeam-from,#ffaa40),var(--cbeam-to,#9c40ff),transparent);
+      offset-anchor:50% 50%;offset-path:rect(0 auto auto 0 round 999px);
+      animation:cbeam-run calc(var(--cbeam-dur,7)*1s) linear infinite;animation-delay:var(--cbeam-delay,0s)}
     @keyframes cbeam-run{to{offset-distance:100%}}
     @media(prefers-reduced-motion:reduce){.cbeam::after{animation:none;opacity:0}}
     .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
