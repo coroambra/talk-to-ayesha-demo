@@ -179,7 +179,7 @@ function buildCbeam() {
 function sizeCbeam() {
   if (!cbeam || !cbeamSegs.length) return;
   const box = cbeam.getBoundingClientRect();
-  const w = box.width, h = box.height, sw = 1.5;              // sw = stroke-width (keep in sync with CSS)
+  const w = box.width, h = box.height, sw = 1.2;              // sw = stroke-width (keep in sync with CSS)
   if (!w || !h) return;
   const r = (h - sw) / 2;
   for (const s of cbeamSegs) {
