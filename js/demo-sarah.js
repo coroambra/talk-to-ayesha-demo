@@ -145,23 +145,6 @@ vapi.on("error", (e) => {
   siri.setTarget(0);
 });
 
-/* ---- Border Beam: point the CSS Motion Path at the Sarah pill's rectangle so the light
-   rides its border. Recompute on resize / font load (the pill width shifts when the mono
-   font swaps in). Vanilla port of 21st.dev @badtzx0/border-beam. ---- */
-const beam = document.querySelector(".voicepill--beam .beam");
-function updateBeamPath() {
-  if (!beam) return;
-  const w = beam.offsetWidth, h = beam.offsetHeight;
-  if (!w || !h) return;
-  beam.style.setProperty("--beam-path", `path("M 0 0 H ${w} V ${h} H 0 V 0")`);
-}
-if (beam) {
-  updateBeamPath();
-  window.addEventListener("resize", updateBeamPath, { passive: true });
-  if (window.ResizeObserver) new ResizeObserver(updateBeamPath).observe(beam.parentElement || beam);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateBeamPath);
-}
-
 /* ---- Navbar: blur on scroll + hide on scroll-down / reveal on scroll-up (same as the site) ---- */
 const nav = document.getElementById("nav");
 let lastY = window.scrollY;

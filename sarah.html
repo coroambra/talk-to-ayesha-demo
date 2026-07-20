@@ -108,33 +108,27 @@
     .voicepill.is-active{background:rgba(255,255,255,.06);border-color:var(--border-strong)}
     .voicepill:disabled{opacity:.45;cursor:default}
     /* ---- Border Beam on the No.1 pick (Sarah): vanilla, CSP-safe port of 21st.dev
-       @badtzx0/border-beam. An animated light travels the button's border via CSS Motion
-       Path; a ring-mask keeps the glow on the 1px border only. Replaces the old
-       "Recommended" chip so the pill stays compact on mobile. The helper line below the
-       pills carries the meaning. Reusable component saved in
-       Design-any-business/saved-components/border-beam/. Tune with --beam-w / --beam-dur / --beam-color. ---- */
-    .voicepill--beam{position:relative;--beam-color:#FF2056}   /* saturated base; .beam__light hue-rotates it through the full RGB spectrum */
-    .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter static box border (beats .is-active) so the RGB beam stands out */
+       @dillionverma / magicui border-beam. A COLOURED gradient comet (orange -> purple ->
+       transparent) runs the pill's border. offset-path: rect(...round) follows the rounded
+       corners natively (Safari 17.2+, Chrome 116+, Firefox 122+), no JS. inset:-1px lands it
+       on the pill's OUTER border. Saved: Design-any-business/saved-components/border-beam-magicui/.
+       Tune: --cbeam-size (comet + corner radius), --cbeam-dur (speed), --cbeam-from / --cbeam-to. ---- */
+    .voicepill--beam{position:relative}
+    .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter static box border (beats .is-active) so the beam stands out */
     .voicepill__txt{position:relative;z-index:1}
-    /* inset:-1px pushes the beam OUT onto the pill's own 1px border (border-box clips an
-       inset:0 child inside the border, which made a second inner ring). Now the beam rides
-       the existing outer border line; that static border is its always-on track. No overflow
-       clip (the mask already confines the glow to the ring, so nothing spills). */
-    .beam{position:absolute;inset:-1px;z-index:0;border-radius:inherit;pointer-events:none;padding:1px;
-      -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-              mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-      -webkit-mask-composite:xor;mask-composite:exclude}
-    .beam__light{position:absolute;top:0;left:0;aspect-ratio:1;width:var(--beam-w,70px);
-      background:radial-gradient(ellipse at center,var(--beam-color,#FAFAFA),transparent 60%,transparent);
-      offset-path:var(--beam-path);offset-distance:0%;
-      animation:beam-move var(--beam-dur,5s) linear infinite}
-    /* RGB mode: the coloured light hue-rotates through the full spectrum as it travels, so
-       the beam cycles red-orange-yellow-green-cyan-blue-magenta. White beams are unaffected
-       (no saturation to rotate). Scoped to Sarah. Tune speed with --beam-hue-dur. */
-    .voicepill--beam .beam__light{animation:beam-move var(--beam-dur,5s) linear infinite,beam-hue var(--beam-hue-dur,6s) linear infinite}
-    @keyframes beam-move{to{offset-distance:100%}}
-    @keyframes beam-hue{to{filter:hue-rotate(360deg)}}
-    @media(prefers-reduced-motion:reduce){.beam__light,.voicepill--beam .beam__light{animation:none;opacity:0}}
+    .cbeam{pointer-events:none;position:absolute;inset:-1px;border-radius:inherit;
+      border:calc(var(--cbeam-bw,1.5)*1px) solid transparent;
+      -webkit-mask:linear-gradient(transparent,transparent),linear-gradient(#fff,#fff);
+              mask:linear-gradient(transparent,transparent),linear-gradient(#fff,#fff);
+      -webkit-mask-clip:padding-box,border-box;mask-clip:padding-box,border-box;
+      -webkit-mask-composite:source-in;mask-composite:intersect}
+    .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,40)*1px);
+      background:linear-gradient(to left,var(--cbeam-from,#ffaa40),var(--cbeam-to,#9c40ff),transparent);
+      offset-anchor:calc(var(--cbeam-anchor,90)*1%) 50%;
+      offset-path:rect(0 auto auto 0 round calc(var(--cbeam-size,40)*1px));
+      animation:cbeam-run calc(var(--cbeam-dur,6)*1s) linear infinite;animation-delay:var(--cbeam-delay,0s)}
+    @keyframes cbeam-run{to{offset-distance:100%}}
+    @media(prefers-reduced-motion:reduce){.cbeam::after{animation:none;opacity:0}}
     .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
 
     /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
@@ -200,7 +194,7 @@
 
         <div class="voicepick" id="voicePick" role="group" aria-label="Choose a voice">
           <span class="voicepick__label">Choose a voice</span>
-          <button class="voicepill voicepill--beam is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button"><span class="beam" aria-hidden="true"><span class="beam__light"></span></span><span class="voicepill__txt">Sarah</span></button>
+          <button class="voicepill voicepill--beam is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button"><span class="cbeam" aria-hidden="true"></span><span class="voicepill__txt">Sarah</span></button>
           <button class="voicepill" data-assistant="3c8427da-e75e-4b79-92c2-0b2fc1b51efd" data-name="Victoria" type="button">Victoria</button>
           <button class="voicepill" data-assistant="eb7eb5b7-1e53-415b-95a2-dbb3921a8144" data-name="Lia" type="button">Lia</button>
           <span class="voicepick__note">Sarah is our top pick, but try whichever you like &mdash; all three understand English and Urdu.</span>
