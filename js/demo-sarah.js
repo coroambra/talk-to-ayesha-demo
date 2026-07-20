@@ -145,31 +145,50 @@ vapi.on("error", (e) => {
   siri.setTarget(0);
 });
 
-/* ---- Border Beam (SVG stroke-dash): size the rounded-rect stroke to the pill so it hugs the
-   border exactly. pathLength=100 keeps the dash a fixed % regardless of size, so only the
-   rect geometry needs updating (on resize / font load); the dash itself travels via CSS. A
-   single stroke dash can never split into two, and the stroke follows the rounded corners
-   itself, so this is seamless where the offset-path square comet bled onto multiple edges. ---- */
+/* ---- Border Beam (SVG stroke-dash COMET): the beam is N short dashes phased along the pill's
+   rounded-rect stroke, under a sine opacity envelope so it fades softly at BOTH ends. Riding
+   the stroke keeps it ONE beam that follows the rounded corners and loops seamlessly.
+   pathLength=100 makes the dash lengths size-independent; only the rect geometry is re-sized
+   on resize / font load. Tune length+softness with N/seg, speed with dur (= --cbeam-dur). ---- */
+const CBEAM = { N: 15, seg: 2, dur: 7 };
+const SVGNS = "http://www.w3.org/2000/svg";
 const cbeam = document.querySelector(".voicepill--beam .cbeam");
-const cbeamTrack = cbeam && cbeam.querySelector(".cbeam__track");
-function updateCbeam() {
-  if (!cbeam || !cbeamTrack) return;
+const cbeamTail = cbeam && cbeam.querySelector(".cbeam__tail");
+let cbeamSegs = [];
+function buildCbeam() {
+  if (!cbeamTail) return;
+  cbeamTail.textContent = "";
+  cbeamSegs = [];
+  const step = (CBEAM.seg / 100) * CBEAM.dur;                 // time-phase between adjacent dashes
+  for (let i = 0; i < CBEAM.N; i++) {
+    const s = document.createElementNS(SVGNS, "rect");
+    s.setAttribute("class", "cbeam__seg");
+    s.setAttribute("pathLength", "100");
+    s.setAttribute("fill", "none");
+    s.style.strokeDasharray = CBEAM.seg + " " + (100 - CBEAM.seg);
+    s.style.animationDelay = (-i * step).toFixed(3) + "s";
+    s.style.opacity = Math.sin((Math.PI * (i + 0.5)) / CBEAM.N).toFixed(3);   // 0 at both ends, 1 in the middle
+    cbeamTail.appendChild(s);
+    cbeamSegs.push(s);
+  }
+}
+function sizeCbeam() {
+  if (!cbeam || !cbeamSegs.length) return;
   const box = cbeam.getBoundingClientRect();
-  const w = box.width, h = box.height, sw = 1.5;   // sw = stroke-width (keep in sync with CSS)
+  const w = box.width, h = box.height, sw = 1.5;              // sw = stroke-width (keep in sync with CSS)
   if (!w || !h) return;
   const r = (h - sw) / 2;
-  cbeamTrack.setAttribute("x", sw / 2);
-  cbeamTrack.setAttribute("y", sw / 2);
-  cbeamTrack.setAttribute("width", Math.max(0, w - sw));
-  cbeamTrack.setAttribute("height", Math.max(0, h - sw));
-  cbeamTrack.setAttribute("rx", r);
-  cbeamTrack.setAttribute("ry", r);
+  for (const s of cbeamSegs) {
+    s.setAttribute("x", sw / 2); s.setAttribute("y", sw / 2);
+    s.setAttribute("width", Math.max(0, w - sw)); s.setAttribute("height", Math.max(0, h - sw));
+    s.setAttribute("rx", r); s.setAttribute("ry", r);
+  }
 }
-if (cbeam && cbeamTrack) {
-  updateCbeam();
-  window.addEventListener("resize", updateCbeam, { passive: true });
-  if (window.ResizeObserver) new ResizeObserver(updateCbeam).observe(cbeam.parentElement || cbeam);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateCbeam);
+if (cbeam && cbeamTail) {
+  buildCbeam(); sizeCbeam();
+  window.addEventListener("resize", sizeCbeam, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(sizeCbeam).observe(cbeam.parentElement || cbeam);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeCbeam);
 }
 
 /* ---- Navbar: blur on scroll + hide on scroll-down / reveal on scroll-up (same as the site) ---- */

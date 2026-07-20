@@ -107,22 +107,20 @@
     .voicepill:hover{background:rgba(255,255,255,.05)}
     .voicepill.is-active{background:rgba(255,255,255,.06);border-color:var(--border-strong)}
     .voicepill:disabled{opacity:.45;cursor:default}
-    /* ---- Border Beam on the No.1 pick (Sarah): an SVG STROKE-DASH beam. ONE dash on a
-       rounded-rect stroke travels the border via animated stroke-dashoffset. The stroke IS
-       the border, so it can only ever be a SINGLE segment, it follows the rounded corners
-       exactly, and the loop is seamless. (An offset-path square comet is taller than this
-       short pill, so at the rounded ends it bled onto the top AND bottom edges at once --
-       looked like two beams -- and it snapped at the corners.) Geometry is sized in
-       demo-sarah.js; colour + length live here. Saved: Design-any-business/saved-components/border-beam-magicui/.
-       Tune: stroke-dasharray (beam length; pathLength=100 so the first number is a %), --cbeam-dur (speed). ---- */
+    /* ---- Border Beam on the No.1 pick (Sarah): an SVG stroke-dash COMET. The beam is a row
+       of short dashes phased along the pill's rounded-rect stroke (built in demo-sarah.js),
+       under a sine opacity envelope so it FADES softly to transparent at BOTH ends (a single
+       hard dash looked "hard"; a square offset-path comet bled onto multiple edges on this
+       short pill). Because the dashes ride the stroke itself, it stays ONE beam, follows the
+       rounded corners exactly, and loops seamlessly. Colour via the SVG gradient.
+       Tune in demo-sarah.js: CBEAM.N / CBEAM.seg (length + softness), CBEAM.dur (speed). ---- */
     .voicepill--beam{position:relative}
     .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter box border so the beam stands out */
     .voicepill__txt{position:relative;z-index:1}
     .cbeam{position:absolute;top:-1px;left:-1px;width:calc(100% + 2px);height:calc(100% + 2px);overflow:visible;pointer-events:none;z-index:0}
-    .cbeam__track{fill:none;stroke:url(#cbeamGrad);stroke-width:1.5;stroke-linecap:round;
-      stroke-dasharray:30 70;animation:cbeam-run var(--cbeam-dur,7s) linear infinite}
+    .cbeam__seg{fill:none;stroke:url(#cbeamGrad);stroke-width:1.5;stroke-linecap:round;animation:cbeam-run var(--cbeam-dur,7s) linear infinite}
     @keyframes cbeam-run{to{stroke-dashoffset:-100}}
-    @media(prefers-reduced-motion:reduce){.cbeam__track{animation:none;opacity:0}}
+    @media(prefers-reduced-motion:reduce){.cbeam__seg{animation:none!important;opacity:0!important}}
     .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
 
     /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
@@ -188,7 +186,7 @@
 
         <div class="voicepick" id="voicePick" role="group" aria-label="Choose a voice">
           <span class="voicepick__label">Choose a voice</span>
-          <button class="voicepill voicepill--beam is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button"><svg class="cbeam" aria-hidden="true"><defs><linearGradient id="cbeamGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffaa40"/><stop offset="1" stop-color="#9c40ff"/></linearGradient></defs><rect class="cbeam__track" pathLength="100"/></svg><span class="voicepill__txt">Sarah</span></button>
+          <button class="voicepill voicepill--beam is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button"><svg class="cbeam" aria-hidden="true"><defs><linearGradient id="cbeamGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffaa40"/><stop offset="1" stop-color="#9c40ff"/></linearGradient></defs><g class="cbeam__tail"></g></svg><span class="voicepill__txt">Sarah</span></button>
           <button class="voicepill" data-assistant="3c8427da-e75e-4b79-92c2-0b2fc1b51efd" data-name="Victoria" type="button">Victoria</button>
           <button class="voicepill" data-assistant="eb7eb5b7-1e53-415b-95a2-dbb3921a8144" data-name="Lia" type="button">Lia</button>
           <span class="voicepick__note">Sarah is our top pick, but try whichever you like &mdash; all three understand English and Urdu.</span>
