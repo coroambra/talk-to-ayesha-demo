@@ -93,24 +93,27 @@
     .talkbtn__mic::after{content:"";position:absolute;left:50%;bottom:-6px;width:8px;height:5px;border:2px solid currentColor;border-top:none;border-radius:0 0 6px 6px;transform:translateX(-50%)}
     .callnote{font-size:12.5px;color:var(--faint);max-width:34ch}
 
-    /* ---- Voice A/B picker (bubbbly glass pills, same recipe as the talk button) ----
-       Lets you switch the ElevenLabs voice before you tap Talk. Disabled while a call
-       is live; the choice is applied as a Vapi assistantOverride on the next call. ---- */
+    /* ---- Voice picker: pick Sarah / Victoria / Lia before you tap Talk (each is its own
+       Vapi assistant). Disabled while a call is live. The pills are the Geist
+       "secondary . small . rounded" button (Vercel Geist Button, 21st.dev @shugar/button-1):
+       faint border, sans text, pill shape, NO blue focus ring. Minimal on purpose.
+       Saved: Design-any-business/saved-components/geist-button/. ---- */
     .voicepick{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:-2px}
     .voicepick__label{width:100%;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
-    .voicepill{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--muted);
-      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.22);border-radius:999px;
-      padding:7px 15px;cursor:pointer;transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease)}
-    .voicepill:hover{background:rgba(255,255,255,.11);color:#fff}
-    .voicepill.is-active{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff}
-    .voicepill:disabled{opacity:.4;cursor:default}
+    .voicepill{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 14px;
+      font-family:var(--sans);font-size:14px;line-height:1;color:var(--text);
+      background:transparent;border:1px solid var(--border);border-radius:100px;cursor:pointer;
+      transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+    .voicepill:hover{background:rgba(255,255,255,.05)}
+    .voicepill.is-active{background:rgba(255,255,255,.06);border-color:var(--border-strong)}
+    .voicepill:disabled{opacity:.45;cursor:default}
     /* ---- Border Beam on the No.1 pick (Sarah): vanilla, CSP-safe port of 21st.dev
        @badtzx0/border-beam. An animated light travels the button's border via CSS Motion
        Path; a ring-mask keeps the glow on the 1px border only. Replaces the old
        "Recommended" chip so the pill stays compact on mobile. The helper line below the
        pills carries the meaning. Reusable component saved in
        Design-any-business/saved-components/border-beam/. Tune with --beam-w / --beam-dur / --beam-color. ---- */
-    .voicepill--beam{position:relative}
+    .voicepill--beam{position:relative;--beam-color:#FF2056}   /* RGB / rose beam (Border Beam light-mode colour) */
     .voicepill__txt{position:relative;z-index:1}
     /* inset:-1px pushes the beam OUT onto the pill's own 1px border (border-box clips an
        inset:0 child inside the border, which made a second inner ring). Now the beam rides
@@ -140,7 +143,7 @@
       .callstatus{font-size:12px}
       .talkbtn{padding:14px 28px;font-size:15px;min-width:200px}
       .callnote{font-size:11.5px}
-      .voicepill{font-size:11.5px;padding:6px 13px}
+      .voicepill{font-size:13px;height:30px;padding:0 13px}
     }
 
     /* ---- Minimal footer ---- */
