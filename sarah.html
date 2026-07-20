@@ -113,7 +113,8 @@
        "Recommended" chip so the pill stays compact on mobile. The helper line below the
        pills carries the meaning. Reusable component saved in
        Design-any-business/saved-components/border-beam/. Tune with --beam-w / --beam-dur / --beam-color. ---- */
-    .voicepill--beam{position:relative;--beam-color:#FF2056}   /* RGB / rose beam (Border Beam light-mode colour) */
+    .voicepill--beam{position:relative;--beam-color:#FF2056}   /* saturated base; .beam__light hue-rotates it through the full RGB spectrum */
+    .voicepill--beam,.voicepill--beam.is-active{border-color:rgba(255,255,255,.06)}   /* fainter static box border (beats .is-active) so the RGB beam stands out */
     .voicepill__txt{position:relative;z-index:1}
     /* inset:-1px pushes the beam OUT onto the pill's own 1px border (border-box clips an
        inset:0 child inside the border, which made a second inner ring). Now the beam rides
@@ -127,8 +128,13 @@
       background:radial-gradient(ellipse at center,var(--beam-color,#FAFAFA),transparent 60%,transparent);
       offset-path:var(--beam-path);offset-distance:0%;
       animation:beam-move var(--beam-dur,5s) linear infinite}
+    /* RGB mode: the coloured light hue-rotates through the full spectrum as it travels, so
+       the beam cycles red-orange-yellow-green-cyan-blue-magenta. White beams are unaffected
+       (no saturation to rotate). Scoped to Sarah. Tune speed with --beam-hue-dur. */
+    .voicepill--beam .beam__light{animation:beam-move var(--beam-dur,5s) linear infinite,beam-hue var(--beam-hue-dur,6s) linear infinite}
     @keyframes beam-move{to{offset-distance:100%}}
-    @media(prefers-reduced-motion:reduce){.beam__light{animation:none;opacity:0}}
+    @keyframes beam-hue{to{filter:hue-rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){.beam__light,.voicepill--beam .beam__light{animation:none;opacity:0}}
     .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
 
     /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
