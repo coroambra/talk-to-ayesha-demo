@@ -110,9 +110,13 @@
        "Recommended" chip so the pill stays compact on mobile. The helper line below the
        pills carries the meaning. Reusable component saved in
        Design-any-business/saved-components/border-beam/. Tune with --beam-w / --beam-dur / --beam-color. ---- */
-    .voicepill--beam{position:relative;overflow:hidden}
+    .voicepill--beam{position:relative}
     .voicepill__txt{position:relative;z-index:1}
-    .beam{position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;padding:1px;
+    /* inset:-1px pushes the beam OUT onto the pill's own 1px border (border-box clips an
+       inset:0 child inside the border, which made a second inner ring). Now the beam rides
+       the existing outer border line; that static border is its always-on track. No overflow
+       clip (the mask already confines the glow to the ring, so nothing spills). */
+    .beam{position:absolute;inset:-1px;z-index:0;border-radius:inherit;pointer-events:none;padding:1px;
       -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
               mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
       -webkit-mask-composite:xor;mask-composite:exclude}
