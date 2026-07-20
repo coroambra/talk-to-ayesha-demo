@@ -104,9 +104,24 @@
     .voicepill:hover{background:rgba(255,255,255,.11);color:#fff}
     .voicepill.is-active{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff}
     .voicepill:disabled{opacity:.4;cursor:default}
-    /* platinum "Recommended" chip on the No.1 pick (Sarah) */
-    .voicepill__rec{display:inline-block;margin-left:7px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-      padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.55);color:#fff;vertical-align:middle}
+    /* ---- Border Beam on the No.1 pick (Sarah): vanilla, CSP-safe port of 21st.dev
+       @badtzx0/border-beam. An animated light travels the button's border via CSS Motion
+       Path; a ring-mask keeps the glow on the 1px border only. Replaces the old
+       "Recommended" chip so the pill stays compact on mobile. The helper line below the
+       pills carries the meaning. Reusable component saved in
+       Design-any-business/saved-components/border-beam/. Tune with --beam-w / --beam-dur / --beam-color. ---- */
+    .voicepill--beam{position:relative;overflow:hidden}
+    .voicepill__txt{position:relative;z-index:1}
+    .beam{position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;padding:1px;
+      -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+              mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+      -webkit-mask-composite:xor;mask-composite:exclude}
+    .beam__light{position:absolute;top:0;left:0;aspect-ratio:1;width:var(--beam-w,70px);
+      background:radial-gradient(ellipse at center,var(--beam-color,#FAFAFA),transparent 60%,transparent);
+      offset-path:var(--beam-path);offset-distance:0%;
+      animation:beam-move var(--beam-dur,5s) linear infinite}
+    @keyframes beam-move{to{offset-distance:100%}}
+    @media(prefers-reduced-motion:reduce){.beam__light{animation:none;opacity:0}}
     .voicepick__note{width:100%;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
 
     /* ---- MOBILE only (<=900px): middle content slightly smaller for breathing room. Nav and footer untouched. ---- */
@@ -172,7 +187,7 @@
 
         <div class="voicepick" id="voicePick" role="group" aria-label="Choose a voice">
           <span class="voicepick__label">Choose a voice</span>
-          <button class="voicepill is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button">Sarah <span class="voicepill__rec">Recommended</span></button>
+          <button class="voicepill voicepill--beam is-active" data-assistant="74fa6c95-50d4-49cf-9214-cfafca604843" data-name="Sarah" type="button"><span class="beam" aria-hidden="true"><span class="beam__light"></span></span><span class="voicepill__txt">Sarah</span></button>
           <button class="voicepill" data-assistant="3c8427da-e75e-4b79-92c2-0b2fc1b51efd" data-name="Victoria" type="button">Victoria</button>
           <button class="voicepill" data-assistant="eb7eb5b7-1e53-415b-95a2-dbb3921a8144" data-name="Lia" type="button">Lia</button>
           <span class="voicepick__note">Sarah is our top pick, but try whichever you like &mdash; all three understand English and Urdu.</span>
