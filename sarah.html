@@ -125,7 +125,7 @@
     /* Tuned for a tiny pill: small comet + faded on BOTH ends (soft head, not a hard block)
        so it reads minimal like the reference. Corner radius is DECOUPLED from the comet size
        (fixed stadium, round 999px) so shrinking the comet still follows the rounded ends. */
-    .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,24)*1px);
+    .cbeam::after{content:"";position:absolute;aspect-ratio:1;width:calc(var(--cbeam-size,48)*1px);
       background:linear-gradient(to left,transparent,var(--cbeam-from,#ffaa40),var(--cbeam-to,#9c40ff),transparent);
       offset-anchor:50% 50%;offset-path:rect(0 auto auto 0 round 999px);
       animation:cbeam-run calc(var(--cbeam-dur,7)*1s) linear infinite;animation-delay:var(--cbeam-delay,0s)}
