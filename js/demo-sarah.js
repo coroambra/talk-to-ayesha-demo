@@ -145,25 +145,31 @@ vapi.on("error", (e) => {
   siri.setTarget(0);
 });
 
-/* ---- Border Beam (magicui comet): drive it with a smooth CLOSED stadium path() instead of
-   offset-path:rect(), whose loop/rotation seam made the comet snap at the corners and jump
-   where the animation restarts. The path starts at the MIDDLE of the top edge (seam on a
-   straight run, tangent continuous) and goes clockwise with semicircle ends, so position AND
-   rotation are continuous the whole way round = seamless. Rebuilt on resize / font load. ---- */
+/* ---- Border Beam (SVG stroke-dash): size the rounded-rect stroke to the pill so it hugs the
+   border exactly. pathLength=100 keeps the dash a fixed % regardless of size, so only the
+   rect geometry needs updating (on resize / font load); the dash itself travels via CSS. A
+   single stroke dash can never split into two, and the stroke follows the rounded corners
+   itself, so this is seamless where the offset-path square comet bled onto multiple edges. ---- */
 const cbeam = document.querySelector(".voicepill--beam .cbeam");
-function updateCbeamPath() {
-  if (!cbeam) return;
-  const w = cbeam.offsetWidth, h = cbeam.offsetHeight;
+const cbeamTrack = cbeam && cbeam.querySelector(".cbeam__track");
+function updateCbeam() {
+  if (!cbeam || !cbeamTrack) return;
+  const box = cbeam.getBoundingClientRect();
+  const w = box.width, h = box.height, sw = 1.5;   // sw = stroke-width (keep in sync with CSS)
   if (!w || !h) return;
-  const r = h / 2, mx = w / 2;               // stadium: full-semicircle ends
-  const p = `path("M ${mx} 0 L ${w - r} 0 A ${r} ${r} 0 0 1 ${w - r} ${h} L ${r} ${h} A ${r} ${r} 0 0 1 ${r} 0 Z")`;
-  cbeam.style.setProperty("--cbeam-path", p);
+  const r = (h - sw) / 2;
+  cbeamTrack.setAttribute("x", sw / 2);
+  cbeamTrack.setAttribute("y", sw / 2);
+  cbeamTrack.setAttribute("width", Math.max(0, w - sw));
+  cbeamTrack.setAttribute("height", Math.max(0, h - sw));
+  cbeamTrack.setAttribute("rx", r);
+  cbeamTrack.setAttribute("ry", r);
 }
-if (cbeam) {
-  updateCbeamPath();
-  window.addEventListener("resize", updateCbeamPath, { passive: true });
-  if (window.ResizeObserver) new ResizeObserver(updateCbeamPath).observe(cbeam.parentElement || cbeam);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateCbeamPath);
+if (cbeam && cbeamTrack) {
+  updateCbeam();
+  window.addEventListener("resize", updateCbeam, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(updateCbeam).observe(cbeam.parentElement || cbeam);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateCbeam);
 }
 
 /* ---- Navbar: blur on scroll + hide on scroll-down / reveal on scroll-up (same as the site) ---- */
