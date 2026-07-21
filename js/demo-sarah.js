@@ -22,6 +22,7 @@ const label  = document.getElementById("talkLabel");
 const status = document.getElementById("callStatus");
 const pick   = document.getElementById("voicePick");
 const pills  = pick ? Array.from(pick.querySelectorAll(".voicepill")) : [];
+const blurb  = document.getElementById("voiceBlurb");   // one-line persona of the selected agent
 
 // default = the recommended agent (the pill marked is-active in the markup: Sarah)
 const first = pills.find((p) => p.classList.contains("is-active")) || pills[0];
@@ -44,6 +45,7 @@ pills.forEach((p) => {
     p.classList.add("is-active");
     selectedAgent = { assistantId: p.dataset.assistant, name: p.dataset.name };
     label.textContent = "Talk to " + selectedAgent.name;
+    if (blurb && p.dataset.blurb) blurb.textContent = p.dataset.blurb;   // swap to this agent's persona line
   });
 });
 
