@@ -13,7 +13,11 @@
 // CSP-safe: three.js from esm.sh (allowed), no inline scripts.
 import * as THREE from "https://esm.sh/three@0.170.0";
 
-const MOBILE = window.matchMedia("(max-width: 900px)").matches;
+// Per-page: <html data-glass="contained"> forces the nebula-inside-the-card
+// (mobile-style) treatment at ALL widths, i.e. desktop gets the clean contained
+// look instead of the fullscreen refraction. Ayesha has no flag => desktop stays fullscreen.
+const MOBILE = window.matchMedia("(max-width: 900px)").matches
+  || document.documentElement.dataset.glass === "contained";
 const MOBILE_TIME_SCALE = 0.35; // slow pace inside the card
 
 const card = document.querySelector(".callcard");
