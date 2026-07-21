@@ -3,7 +3,7 @@
 // selection and the on-screen English copy differ. The Urdu Ayesha page (index.html +
 // demo.js) is untouched.
 //
-// Sarah / Victoria / Lia are THREE separate Vapi assistants, each with its own name,
+// Sarah / Alina / Zara are THREE separate Vapi assistants, each with its own name,
 // persona and ElevenLabs voice baked in (no runtime overrides => full latency + prompt
 // quality). The picker just chooses which assistant to start, so each introduces herself
 // by her own name. Sarah is the recommended default.
@@ -35,7 +35,7 @@ function setStatus(text, live) {
   status.classList.toggle("is-live", !!live);
 }
 
-/* ---- Agent picker: choose Sarah / Victoria / Lia before tapping Talk ---- */
+/* ---- Agent picker: choose Sarah / Alina / Zara before tapping Talk ---- */
 function setPickerEnabled(on) { pills.forEach((p) => { p.disabled = !on; }); }
 pills.forEach((p) => {
   p.addEventListener("click", () => {
