@@ -44,7 +44,6 @@ pills.forEach((p) => {
     p.classList.add("is-active");
     selectedAgent = { assistantId: p.dataset.assistant, name: p.dataset.name };
     label.textContent = "Talk to " + selectedAgent.name;
-    setStatus("Voice set to " + selectedAgent.name + ", tap to talk");
   });
 });
 
