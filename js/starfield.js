@@ -15,6 +15,10 @@
   var quantity  = 512;
   var easing    = 1;
 
+  // DESKTOP ONLY: the mobile layout is tight, so the field is skipped on phones
+  // (<=900px). Decided once at load, matching how nebula-glass.js picks its mode.
+  if (window.matchMedia("(max-width: 900px)").matches) return;
+
   var host = document.getElementById("starfield");
   if (!host) return;
 
