@@ -31,6 +31,7 @@ const NEBULA_FRAG = `
   uniform vec2 iResolution;
   uniform float iTime;
   uniform vec2 iMouse;
+  uniform float uMirrorX;               // 1.0 flips the nebula horizontally (left <-> right)
   uniform bool hasActiveReminders;
   uniform bool hasUpcomingReminders;
   uniform bool disableCenterDimming;
@@ -47,7 +48,10 @@ const NEBULA_FRAG = `
   }
 
   void mainImage(out vec4 O, in vec2 fragCoord) {
-    vec2 uv = fragCoord / min(iResolution.x, iResolution.y) - vec2(.9, .5);
+    // uMirrorX=1 mirrors the sampling x so the whole nebula lands on the other side,
+    // same animation, just flipped. Center-dimming below stays symmetric so it's unaffected.
+    vec2 fc = vec2(mix(fragCoord.x, iResolution.x - fragCoord.x, uMirrorX), fragCoord.y);
+    vec2 uv = fc / min(iResolution.x, iResolution.y) - vec2(.9, .5);
     uv.x += .4;
     vec3 col = vec3(0.0);
     float d = 2.5;
@@ -84,11 +88,12 @@ const NEBULA_FRAG = `
   }
 `;
 
-function makeNebula(disableCenterDimming) {
+function makeNebula(disableCenterDimming, mirrorX = 0) {
   const uniforms = {
     iTime: { value: 0 },
     iResolution: { value: new THREE.Vector2() },
     iMouse: { value: new THREE.Vector2() },
+    uMirrorX: { value: mirrorX },
     hasActiveReminders: { value: false },
     hasUpcomingReminders: { value: false },
     disableCenterDimming: { value: disableCenterDimming },
@@ -161,7 +166,9 @@ function bootDesktop() {
     return;
   }
 
-  const { scene: nebulaScene, uniforms: nebulaUniforms } = makeNebula(false);
+  // Per-page: <html data-nebula="right"> mirrors the desktop nebula to the right side.
+  const mirrorX = document.documentElement.dataset.nebula === "right" ? 1 : 0;
+  const { scene: nebulaScene, uniforms: nebulaUniforms } = makeNebula(false, mirrorX);
   const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const clock = new THREE.Clock();
   window.addEventListener("mousemove", (e) => {
