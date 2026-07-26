@@ -1,6 +1,7 @@
 // Talk to Ayesha, Vapi web call + siri-wave visualizer (reacts to both voices) + site nav.
 import Vapi from "https://esm.sh/@vapi-ai/web@2";
 import { createSiriWave } from "./siri-wave.js";
+import { micPreflight, releaseMic, watchMic, MIC_ERRORS } from "./mic-preflight.js";
 
 const PUBLIC_KEY   = "3abf07c7-8a64-4701-a303-79ad43434d37";     // Vapi PUBLIC key
 const ASSISTANT_ID = "63210d1b-1133-4753-9ed3-1d35ef802ddf";     // Skyline Estate Lahore (Urdu Demo)
@@ -22,29 +23,24 @@ function setStatus(text, live) {
   status.classList.toggle("is-live", !!live);
 }
 
-/* ---- Prospect mic reactivity: analyse the caller's own voice ---- */
-let micStream = null, audioCtx = null, analyser = null, micData = null, micRAF = 0, micRunning = false;
+/* ---- Prospect mic reactivity: reuse the PREFLIGHTED stream (see mic-preflight.js) ----
+   This no longer opens the microphone itself. The stream was already acquired and proven
+   to be delivering real audio before the call was allowed to start, and it stays open for
+   the whole call, so nothing is ever torn down and re-opened underneath Vapi. */
+let mic = null;                                  // { stream, audioCtx, analyser, micData }
+let unwatchMic = null;
+let micRAF = 0, micRunning = false;
 
-async function startMic() {
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = audioCtx.createMediaStreamSource(micStream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512;
-    src.connect(analyser);
-    micData = new Uint8Array(analyser.fftSize);
-    micRunning = true;
-    loopMic();
-  } catch (e) {
-    console.warn("mic analyser unavailable, falling back to assistant-only", e);
-    micRunning = false;
-  }
+function startMic() {
+  if (!mic) { micRunning = false; return; }
+  micRunning = true;
+  loopMic();
 }
 function loopMic() {
-  if (!analyser) return;
-  analyser.getByteTimeDomainData(micData);
+  if (!mic || !mic.analyser) return;
+  mic.analyser.getByteTimeDomainData(mic.micData);
   let sum = 0;
+  const micData = mic.micData;
   for (let i = 0; i < micData.length; i++) { const v = (micData[i] - 128) / 128; sum += v * v; }
   const rms = Math.sqrt(sum / micData.length);
   const userLevel = Math.min(1, rms * 4.2);
@@ -55,27 +51,45 @@ function loopMic() {
 function stopMic() {
   micRunning = false;
   if (micRAF) cancelAnimationFrame(micRAF), (micRAF = 0);
-  analyser = null;
-  if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
-  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  if (unwatchMic) { unwatchMic(); unwatchMic = null; }
+  releaseMic(mic);
+  mic = null;
 }
 
 /* ---- Call control ---- */
 btn.addEventListener("click", async () => {
   if (inCall) { vapi.stop(); return; }
+  btn.disabled = true;
+
+  // STEP 1: the mic must be granted, live, unmuted AND actually delivering audio frames
+  // before we connect. The old code granted permission then immediately stopped the
+  // tracks, which handed Vapi a live-but-silent device on some phones and killed the call
+  // with `error-assistant-did-not-receive-customer-audio`. We now keep the stream open.
   try {
-    btn.disabled = true;
-    // Warm up the mic permission BEFORE starting the call: when the permission
-    // prompt appeared mid-connect, Vapi received no audio and killed the call
-    // (18 of 35 field calls died on the first tap this way). Grant, then connect.
-    setStatus("Allow the microphone to talk...");
-    const warm = await navigator.mediaDevices.getUserMedia({ audio: true });
-    warm.getTracks().forEach((t) => t.stop());
+    setStatus("Checking your microphone...");
+    mic = await micPreflight();
+  } catch (e) {
+    console.error("mic preflight failed", e.code, e);
+    setStatus(MIC_ERRORS[e.code] || MIC_ERRORS.DENIED);
+    btn.disabled = false;
+    return;                                   // never start a call we know has no audio
+  }
+
+  // If the mic dies mid-call (headset unplugged, OS mute, another app grabs it), say so
+  // instead of letting the caller talk into a void.
+  unwatchMic = watchMic(mic, (code) => {
+    setStatus(MIC_ERRORS[code] || MIC_ERRORS.SILENT);
+    try { vapi.stop(); } catch (_) {}
+  });
+
+  // STEP 2: only now connect.
+  try {
     setStatus("Connecting...");
     await vapi.start(ASSISTANT_ID);
   } catch (e) {
     console.error("start failed", e);
-    setStatus("Mic blocked or error, allow mic and retry");
+    setStatus("Couldn't connect, tap to retry");
+    stopMic();                                // release the preflighted stream
     btn.disabled = false;
   }
 });
