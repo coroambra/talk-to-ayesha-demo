@@ -228,6 +228,8 @@
   <!-- animated Platinum Frost favicon (desktop tabs; mobile keeps the static PNG) -->
   <script src="js/liquid-favicon.js"></script>
   <!-- Vapi call + siri-wave (English assistant + 5-voice A/B) -->
-  <script type="module" src="js/demo-sarah.js"></script>
+  <!-- v=20260726: mic preflight. Bump this whenever demo-sarah.js or mic-preflight.js
+       changes, otherwise a cached copy of the old module keeps running on field devices. -->
+  <script type="module" src="js/demo-sarah.js?v=20260726"></script>
 </body>
 </html>
